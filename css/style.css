@@ -393,6 +393,23 @@ footer {
   }
 }
 
+/* Strong override for medicines listing to ensure non-cropping uniform images */
+.medicine-grid .medicine-card .img-wrap {
+  aspect-ratio: 4 / 3 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 8px !important;
+  background: #fafafa;
+  overflow: hidden;
+}
+.medicine-grid .medicine-card .img-wrap > img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  display: block;
+}
+
 /* ===== MOBILE NAV ===== */
 @media (max-width: 768px) {
   nav {
