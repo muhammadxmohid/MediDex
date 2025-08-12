@@ -80,9 +80,7 @@
             card.className = "medicine-card";
             card.innerHTML = `
             <img src="${med.image}" alt="${med.name}">
-            <h3><a href="medicine-details.html?id=${med.id}">${
-              med.name
-            }</a></h3>
+            <h3><a href="medicine-details.html?id=${med.id}">${med.name}</a></h3>
             <p><strong>Category:</strong> ${med.category}</p>
             <p>${med.description.substring(0, 80)}...</p>
           `;
