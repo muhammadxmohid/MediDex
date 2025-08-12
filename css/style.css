@@ -1,0 +1,424 @@
+/* =========================
+   MediDex - Complete CSS (Fixed Uniform Cards)
+   ========================= */
+
+/* Google font */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* ===== RESET / BASE ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  background: #f9f9f9;
+  color: #222;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ===== HEADER ===== */
+header {
+  background: #0077b6;
+  color: #fff;
+  padding: 1rem 0.5rem;
+  flex-shrink: 0;
+}
+
+.nav-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+nav a {
+  color: #fff;
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+
+nav a:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* hamburger */
+.hamburger {
+  display: none;
+  cursor: pointer;
+  gap: 6px;
+  flex-direction: column;
+}
+.hamburger span {
+  width: 24px;
+  height: 3px;
+  background: #fff;
+  display: block;
+  border-radius: 2px;
+}
+
+/* ===== SEARCH BAR ===== */
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.9rem auto;
+  max-width: 600px;
+  width: calc(100% - 2rem);
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.2rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.search-bar input {
+  flex: 1 1 auto;
+  border: none;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  outline: none;
+}
+
+.search-bar input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.08);
+}
+
+.search-bar button {
+  background: #0077b6;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.search-bar button:hover {
+  background: #005f86;
+}
+.search-bar button i {
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1200;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  display: none;
+}
+.suggestions.active {
+  display: block;
+}
+.suggestions div {
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.suggestions div:hover,
+.suggestions div[aria-selected="true"] {
+  background: #0077b6;
+  color: #fff;
+}
+
+/* ===== ALPHABET FILTER ===== */
+.alphabet-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 0.75rem 0;
+  padding: 0 0.5rem;
+}
+.alphabet-filter button {
+  background: transparent;
+  border: 1px solid #ddd;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.alphabet-filter button.active {
+  background: #0077b6;
+  color: #fff;
+  border-color: #0077b6;
+}
+
+/* ===== MEDICINE GRID & CARDS ===== */
+.medicine-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.medicine-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.medicine-card .img-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 3; /* Ensures uniform height */
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.medicine-card .img-wrap img {
+  width: 300px;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain; /* Uniform crop */
+  display: block;
+}
+
+.medicine-card .card-body {
+  padding: 0.9rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.medicine-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+.medicine-card p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0;
+  text-align: center;
+}
+
+.medicine-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== MEDICINE DETAILS ===== */
+/* #medicine-details {
+  max-width: 900px;
+  margin: 1.25rem auto;
+  padding: 1rem;
+}
+#medicine-details article {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+#medicine-details img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 6px;
+} */
+/* --- Medicine Details Page Layout --- */
+#medicine-details article {
+  display: flex;
+  flex-wrap: wrap; /* fallback for smaller screens */
+  gap: 1rem;
+  align-items: flex-start;
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  max-width: 900px;
+  margin: 1.25rem auto;
+}
+
+#medicine-details img {
+  max-width: 300px; /* uniform width */
+  max-height: 300px; /* uniform height */
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0; /* prevent shrinking */
+}
+
+#medicine-details .details-content {
+  flex: 1; /* take remaining space */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Responsive for small screens */
+@media (max-width: 768px) {
+  #medicine-details article {
+    flex-direction: column;
+    align-items: center;
+  }
+  #medicine-details img {
+    max-width: 100%;
+    max-height: none;
+  }
+  #medicine-details .details-content {
+    width: 100%;
+  }
+}
+/* ===== FOOTER ===== */
+footer {
+  background: #0077b6;
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
+  margin-top: auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 400px) {
+  .search-bar {
+    margin: 0.6rem auto;
+    padding: 0.15rem;
+  }
+  .medicine-card .img-wrap {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (max-width: 599px) {
+  .medicine-grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 14px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1024px) {
+  .medicine-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .medicine-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  nav {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 64px;
+    right: 12px;
+    width: 220px;
+    background: #0077b6;
+    padding: 0.75rem;
+    border-radius: 8px;
+    z-index: 1100;
+  }
+  nav.active {
+    display: flex;
+  }
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* ===== SMALL UI DETAILS ===== */
+.alphabet-filter button {
+  font-size: 0.85rem;
+}
+
+.search-bar input::placeholder {
+  color: #999;
+}
+
+button:focus,
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.08);
+}
+
+/* img {
+  max-width: 100%;
+  display: block;
+}
+.medicine-card .img-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.medicine-card .img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+} */

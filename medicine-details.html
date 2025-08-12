@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MediDex - Medicine Details</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="nav-container">
+        <div class="logo">
+          <a href="index.html" style="color: white">MediDex</a>
+        </div>
+        <nav>
+          <a href="index.html">Home</a>
+          <a href="medicines.html">All Medicines</a>
+          <a href="about.html">About Us</a>
+        </nav>
+        <div
+          class="hamburger"
+          aria-label="Toggle menu"
+          role="button"
+          tabindex="0"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <form class="search-bar" role="search" autocomplete="off">
+        <input
+          type="search"
+          placeholder="Search medicines..."
+          aria-label="Search medicines"
+        />
+        <div class="suggestions"></div>
+        <button type="submit" class="search-btn">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+    </header>
+
+    <main style="max-width: 1100px; margin: auto; padding: 1rem">
+      <a
+        href="medicines.html"
+        style="
+          color: #0077b6;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          display: inline-block;
+        "
+        >← Back to All Medicines</a
+      >
+      <article
+        id="medicine-details"
+        style="
+          background: white;
+          padding: 1rem;
+          border-radius: 5px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        "
+      >
+        <!-- JS will render details here -->
+      </article>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 MediDex. All rights reserved.</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script>
+      // Render medicine details based on URL ?id=
+      document.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const id = Number(params.get("id"));
+        const container = document.getElementById("medicine-details");
+
+        if (!container) return;
+
+        const med = medicines.find((m) => m.id === id);
+
+        if (!med) {
+          container.innerHTML = "<p>Medicine not found.</p>";
+          return;
+        }
+
+        container.innerHTML = `
+        <h1>${med.name}</h1>
+        <img src="${med.image}" alt="${med.name}" style="max-width:100%; height:auto; border-radius:5px; margin-bottom:1rem;" />
+        <p><strong>Category:</strong> ${med.category}</p>
+        <p>${med.description}</p>
+        <h3>Usage</h3>
+        <p>Follow your healthcare provider’s instructions carefully.</p>
+        <h3>Side Effects</h3>
+        <p>May cause nausea, dizziness, or allergic reactions in some people.</p>
+      `;
+      });
+    </script>
+  </body>
+</html>
