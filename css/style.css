@@ -1,5 +1,5 @@
 /* =========================
-   MediDex - Complete CSS (Fixed Uniform Cards)
+   MediDex - Complete CSS (Uniform Images + Fixed Details Layout)
    ========================= */
 
 /* Google font */
@@ -39,6 +39,12 @@ main {
 a {
   text-decoration: none;
   color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 /* ===== HEADER ===== */
@@ -218,43 +224,78 @@ nav a:hover {
   flex-direction: column;
   align-items: stretch;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
 }
 
+/* Wrapper variant used on medicines.html (rendered by script.js) */
 .medicine-card .img-wrap {
   width: 100%;
-  aspect-ratio: 4 / 3; /* Ensures uniform height */
+  aspect-ratio: 4 / 3; /* Uniform image slot */
   background: #fafafa;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   overflow: hidden;
+  padding: 8px; /* breathing space for contain */
 }
 
 .medicine-card .img-wrap img {
-  width: 300px;
-  height: auto;
-  max-height: 300px;
-  object-fit: contain; /* Uniform crop */
-  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Never crop */
+  object-position: center;
 }
 
-.medicine-card .card-body {
-  padding: 0.9rem 1rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+/* Direct <img> variant used on index.html featured cards */
+.medicine-card > img {
+  width: 100%;
+  aspect-ratio: 4 / 3; /* Uniform height */
+  object-fit: contain; /* Never crop */
+  object-position: center;
+  background: #fafafa;
+  padding: 8px;
 }
+
 .medicine-card h3 {
   font-size: 1.05rem;
   font-weight: 600;
-  margin: 0;
+  margin: 0.6rem 0 0.2rem;
   text-align: center;
 }
+
 .medicine-card p {
   font-size: 0.9rem;
   color: #555;
-  margin: 0;
+  margin: 0 0 0.25rem;
   text-align: center;
+}
+
+/* Uniform card text heights */
+.medicine-card h3,
+.medicine-card h3 a {
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.25 * 1em);
+}
+
+.medicine-card p:first-of-type {
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.25 * 1em);
+}
+
+.medicine-card p:last-of-type {
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(2 * 1.5em);
 }
 
 .medicine-card:hover {
@@ -262,71 +303,55 @@ nav a:hover {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* ===== MEDICINE DETAILS ===== */
-/* #medicine-details {
-  max-width: 900px;
-  margin: 1.25rem auto;
-  padding: 1rem;
-}
-#medicine-details article {
-  background: #fff;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-#medicine-details img {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: contain;
-  border-radius: 6px;
-} */
-/* --- Medicine Details Page Layout --- */
-#medicine-details article {
-  display: flex;
-  flex-wrap: wrap; /* fallback for smaller screens */
+/* ===== MEDICINE DETAILS (description left, image right) ===== */
+#medicine-details {
+  display: grid;
+  grid-template-columns: 1fr 420px; /* content | image */
   gap: 1rem;
-  align-items: flex-start;
-  background: #fff;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  align-items: start;
+  background: #fff; /* inline style also sets this; safe duplicate */
+  border-radius: 10px; /* slightly larger radius */
+  padding: 1rem; /* inline style also sets this; safe duplicate */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* safe duplicate */
   max-width: 900px;
   margin: 1.25rem auto;
 }
 
-#medicine-details img {
-  max-width: 300px; /* uniform width */
-  max-height: 300px; /* uniform height */
+/* Place the IMG in the right column spanning all content rows */
+#medicine-details > img {
+  grid-column: 2;
+  grid-row: 1 / -1;
   width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 6px;
-  flex-shrink: 0; /* prevent shrinking */
+  aspect-ratio: 4 / 3; /* uniform frame */
+  object-fit: contain; /* never crop */
+  object-position: center;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
 }
 
-#medicine-details .details-content {
-  flex: 1; /* take remaining space */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.5rem;
+/* Place all other children (title, paragraphs, headings) in the left column */
+#medicine-details > *:not(img) {
+  grid-column: 1;
 }
 
-/* Responsive for small screens */
-@media (max-width: 768px) {
-  #medicine-details article {
-    flex-direction: column;
-    align-items: center;
+/* Responsive stack on small screens */
+@media (max-width: 900px) {
+  #medicine-details {
+    grid-template-columns: 1fr;
   }
-  #medicine-details img {
+  #medicine-details > img {
+    grid-column: 1;
+    grid-row: auto;
+    order: 2; /* put image after text on small screens */
     max-width: 100%;
-    max-height: none;
   }
-  #medicine-details .details-content {
-    width: 100%;
+  #medicine-details > *:not(img) {
+    order: 1;
   }
 }
+
 /* ===== FOOTER ===== */
 footer {
   background: #0077b6;
@@ -336,14 +361,11 @@ footer {
   margin-top: auto;
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== RESPONSIVE GRID BREAKPOINTS ===== */
 @media (max-width: 400px) {
   .search-bar {
     margin: 0.6rem auto;
     padding: 0.15rem;
-  }
-  .medicine-card .img-wrap {
-    aspect-ratio: 4 / 3;
   }
 }
 
@@ -371,6 +393,7 @@ footer {
   }
 }
 
+/* ===== MOBILE NAV ===== */
 @media (max-width: 768px) {
   nav {
     display: none;
@@ -406,19 +429,3 @@ input:focus {
   outline: none;
   box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.08);
 }
-
-/* img {
-  max-width: 100%;
-  display: block;
-}
-.medicine-card .img-wrap {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-}
-
-.medicine-card .img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-} */
