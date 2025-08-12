@@ -408,16 +408,23 @@ footer {
   aspect-ratio: 4 / 3 !important;
   display: grid !important;
   place-items: center !important;
-  padding: 8px !important;
+  padding: 0 !important; /* maximize image area */
   background: #fafafa;
   overflow: hidden;
 }
 .medicine-grid .medicine-card .img-wrap > img {
   width: 100% !important;
   height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   object-fit: contain !important;
   object-position: center !important;
   display: block;
+}
+/* Ensure suggestions text is readable on white background */
+.suggestions,
+.suggestions div {
+  color: #222;
 }
 
 /* ===== MOBILE NAV ===== */
