@@ -111,6 +111,12 @@ function renderMedicines(meds) {
       <p><strong>Category:</strong> ${med.category}</p>
       <p>${med.description.substring(0, 80)}...</p>
     `;
+
+    // Make entire card clickable
+    card.addEventListener("click", () => {
+      window.location.href = `medicine-details.html?id=${med.id}`;
+    });
+
     grid.appendChild(card);
   });
 }

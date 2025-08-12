@@ -47,10 +47,12 @@
 
     <main>
       <section style="max-width: 1100px; margin: auto; padding: 1rem">
-        <h1>Welcome to MediDex</h1>
-        <p>Your reliable source for medicine information.</p>
+        <div id="welcome">
+          <h1>Welcome to MediDex</h1>
+          <p>Your reliable source for medicine information.</p>
 
-        <h2>Featured Medicines</h2>
+          <h2>Featured Medicines</h2>
+        </div>
         <div
           class="medicine-grid"
           aria-live="polite"
@@ -84,6 +86,9 @@
             <p><strong>Category:</strong> ${med.category}</p>
             <p>${med.description.substring(0, 80)}...</p>
           `;
+            card.addEventListener("click", () => {
+              window.location.href = "medicine-details.html?id=" + med.id;
+            });
             grid.appendChild(card);
           });
         }
