@@ -31,6 +31,14 @@
           <span></span>
           <span></span>
         </div>
+        <!-- Theme toggle button -->
+        <button
+          id="theme-toggle"
+          class="theme-toggle"
+          aria-label="Toggle theme"
+        >
+          🌙
+        </button>
       </div>
       <form class="search-bar" role="search" autocomplete="off">
         <input
@@ -49,38 +57,31 @@
       <section style="max-width: 1100px; margin: auto; padding: 1rem">
         <h1>All Medicines</h1>
 
-        <!-- <div
-          class="alphabet-filter"
-          aria-label="Filter medicines by first letter"
-          style="margin-bottom: 1rem; text-align: center"
-        >
-          <button type="button">A</button>
-          <button type="button">B</button>
-          <button type="button">C</button>
-          <button type="button">D</button>
-          <button type="button">E</button>
-          <button type="button">F</button>
-          <button type="button">G</button>
-          <button type="button">H</button>
-          <button type="button">I</button>
-          <button type="button">J</button>
-          <button type="button">K</button>
-          <button type="button">L</button>
-          <button type="button">M</button>
-          <button type="button">N</button>
-          <button type="button">O</button>
-          <button type="button">P</button>
-          <button type="button">Q</button>
-          <button type="button">R</button>
-          <button type="button">S</button>
-          <button type="button">T</button>
-          <button type="button">U</button>
-          <button type="button">V</button>
-          <button type="button">W</button>
-          <button type="button">X</button>
-          <button type="button">Y</button>
-          <button type="button">Z</button>
-        </div> -->
+        <!-- Toolbar: filters and sorting -->
+        <div class="toolbar" role="region" aria-label="Filters and sorting">
+          <div class="toolbar-left">
+            <label>
+              <span class="sr-only">Filter by category</span>
+              <select id="filter-category" class="select">
+                <option value="">All categories</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar-right">
+            <label>
+              <span class="sr-only">Sort by</span>
+              <select id="sort-by" class="select">
+                <option value="name-asc">Sort: A → Z</option>
+                <option value="name-desc">Sort: Z → A</option>
+              </select>
+            </label>
+            <span
+              id="results-count"
+              class="results-count"
+              aria-live="polite"
+            ></span>
+          </div>
+        </div>
 
         <div
           class="medicine-grid"

@@ -31,6 +31,14 @@
           <span></span>
           <span></span>
         </div>
+        <!-- Theme toggle button -->
+        <button
+          id="theme-toggle"
+          class="theme-toggle"
+          aria-label="Toggle theme"
+        >
+          🌙
+        </button>
       </div>
       <form class="search-bar" role="search" autocomplete="off">
         <input
@@ -47,12 +55,10 @@
 
     <main>
       <section style="max-width: 1100px; margin: auto; padding: 1rem">
-        <div id="welcome">
-          <h1>Welcome to MediDex</h1>
-          <p>Your reliable source for medicine information.</p>
+        <h1>Welcome to MediDex</h1>
+        <p>Your reliable source for medicine information.</p>
 
-          <h2>Featured Medicines</h2>
-        </div>
+        <h2>Featured Medicines</h2>
         <div
           class="medicine-grid"
           aria-live="polite"
@@ -79,7 +85,7 @@
             const card = document.createElement("div");
             card.className = "medicine-card";
             card.innerHTML = `
-            <img src="${med.image}" alt="${med.name}">
+            <img src="${med.image}" alt="${med.name}" loading="lazy">
             <h3><a href="medicine-details.html?id=${med.id}">${
               med.name
             }</a></h3>

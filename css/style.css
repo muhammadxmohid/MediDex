@@ -468,3 +468,148 @@ input:focus {
   outline: none;
   box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.08);
 }
+
+/* Toolbar and selects */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+.toolbar .toolbar-left,
+.toolbar .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 8px 10px;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+}
+.results-count {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #0b5ed7;
+  font-weight: 600;
+}
+
+/* Inject badge above title inside card (optional container) */
+.medicine-card .badge {
+  align-self: center;
+  margin-top: 8px;
+}
+
+/* Skeleton loaders */
+.skeleton {
+  position: relative;
+  background: #eee;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton-card {
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+.skeleton-card .img {
+  height: clamp(160px, 28vw, 220px);
+}
+.skeleton-card .line {
+  height: 12px;
+  margin: 10px 16px;
+  border-radius: 6px;
+}
+.skeleton-card .line.wide {
+  width: 80%;
+}
+.skeleton-card .line.narrow {
+  width: 60%;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Dark theme overrides */
+body.dark {
+  background: #0b0f16;
+  color: #e7ebf3;
+}
+body.dark header {
+  background: #0d4672;
+}
+body.dark .search-bar {
+  background: #121826;
+  box-shadow: none;
+}
+body.dark .search-bar input {
+  color: #e7ebf3;
+}
+body.dark .suggestions {
+  background: #121826;
+  border-color: #273043;
+}
+body.dark .suggestions,
+body.dark .suggestions div {
+  color: #e7ebf3;
+}
+body.dark .medicine-card {
+  background: #121723;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+body.dark .medicine-card p {
+  color: #b7c1d6;
+}
+body.dark .select {
+  background: #121826;
+  color: #e7ebf3;
+  border-color: #273043;
+}
+body.dark .badge {
+  background: #0f2a52;
+  color: #9cc2ff;
+}
+body.dark footer {
+  background: #0d4672;
+}
