@@ -26,10 +26,10 @@ model OrderItem {
   id        String  @id @default(cuid())
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
-  productId Int
+  medId     Int?
   name      String
   price     Decimal @db.Decimal(10, 2)
-  quantity  Int
+  qty       Int
 
   @@index([orderId])
 }
