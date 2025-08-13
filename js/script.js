@@ -4,14 +4,15 @@ const medicines = [
     id: 1,
     name: "Aspirin",
     category: "Tablet",
-    description:
-      "Used to reduce pain, fever, or inflammation. Often used for headaches and cardiovascular health.",
+    price: 5.99,
+    description: "Used to reduce pain, fever, or inflammation.",
     image: "images/aspirin.png",
   },
   {
     id: 2,
     name: "Benzyl Penicillin",
     category: "Injection",
+    price: 19.99,
     description: "Antibiotic used for bacterial infections.",
     image: "images/benzene.png",
   },
@@ -19,6 +20,7 @@ const medicines = [
     id: 3,
     name: "Paracetamol",
     category: "Tablet",
+    price: 6.49,
     description: "Pain reliever and fever reducer.",
     image: "images/paracetamol.png",
   },
@@ -26,13 +28,15 @@ const medicines = [
     id: 4,
     name: "Amoxicillin",
     category: "Capsule",
-    description: "Antibiotic used to treat a variety of infections.",
+    price: 12.49,
+    description: "Antibiotic for a variety of infections.",
     image: "images/amoxicillin.png",
   },
   {
     id: 5,
     name: "Ibuprofen",
     category: "Tablet",
+    price: 7.49,
     description: "Reduces fever and treats pain or inflammation.",
     image: "images/ibuprofen.png",
   },
@@ -40,6 +44,7 @@ const medicines = [
     id: 6,
     name: "Cetirizine",
     category: "Tablet",
+    price: 4.99,
     description: "Antihistamine used to relieve allergy symptoms.",
     image: "images/cetirizine.png",
   },
@@ -47,15 +52,49 @@ const medicines = [
     id: 7,
     name: "Doxycycline",
     category: "Capsule",
-    description: "Antibiotic for respiratory tract infections and more.",
+    price: 14.99,
+    description: "Antibiotic for respiratory infections and more.",
     image: "images/doxycycline.png",
   },
   {
     id: 8,
     name: "Metformin",
     category: "Tablet",
+    price: 8.99,
     description: "Used to treat type 2 diabetes.",
     image: "images/metmormin.png",
+  },
+  {
+    id: 9,
+    name: "Loratadine",
+    category: "Tablet",
+    price: 5.49,
+    description: "Antihistamine for seasonal allergies.",
+    image: "images/loratadine.png",
+  },
+  {
+    id: 10,
+    name: "Naproxen",
+    category: "Tablet",
+    price: 9.49,
+    description: "NSAID for pain and inflammation.",
+    image: "images/naproxen.png",
+  },
+  {
+    id: 11,
+    name: "ORS Solution",
+    category: "Solution",
+    price: 3.99,
+    description: "Oral rehydration solution for dehydration.",
+    image: "images/ors.png",
+  },
+  {
+    id: 12,
+    name: "Dextromethorphan Syrup",
+    category: "Syrup",
+    price: 6.99,
+    description: "Cough suppressant for dry cough.",
+    image: "images/dxm.png",
   },
 ];
 
@@ -63,29 +102,10 @@ const medicines = [
 document.addEventListener("DOMContentLoaded", () => {
   const hamburger = document.querySelector(".hamburger");
   const navMenu = document.querySelector("nav");
-
-  if (hamburger && navMenu) {
-    hamburger.addEventListener("click", () => {
-      navMenu.classList.toggle("active");
-    });
-  }
-});
-
-// ===== Global Search Bar Handler =====
-document.addEventListener("DOMContentLoaded", () => {
-  const searchForm = document.querySelector(".search-bar");
-  const searchInput = document.querySelector(".search-bar input");
-
-  if (searchForm) {
-    searchForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const query = searchInput.value.trim();
-      if (query.length > 0) {
-        localStorage.setItem("medidexSearchQuery", query);
-        window.location.href = "medicines.html";
-      }
-    });
-  }
+  if (hamburger && navMenu)
+    hamburger.addEventListener("click", () =>
+      navMenu.classList.toggle("active")
+    );
 });
 
 // ===== Theme toggle (persisted) =====
@@ -96,6 +116,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (saved === "dark") {
     root.classList.add("dark");
     if (toggle) toggle.textContent = "☀️";
+  } else {
+    root.classList.remove("dark");
+    if (toggle) toggle.textContent = "🌙";
   }
   if (toggle) {
     toggle.addEventListener("click", (e) => {
@@ -108,73 +131,46 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ===== Helpers =====
-function uniqueCategories(items) {
-  return Array.from(new Set(items.map((m) => m.category).filter(Boolean)));
-}
-
-function sortMeds(meds, sortBy) {
-  const copy = meds.slice();
-  if (sortBy === "name-asc") copy.sort((a, b) => a.name.localeCompare(b.name));
-  if (sortBy === "name-desc") copy.sort((a, b) => b.name.localeCompare(a.name));
-  return copy;
-}
-
-// ===== Skeletons =====
-function showSkeletons(count = 6) {
-  const grid = document.querySelector(".medicine-grid");
-  if (!grid) return;
-  grid.innerHTML = "";
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < count; i++) {
-    const card = document.createElement("div");
-    card.className = "skeleton-card";
-    card.innerHTML = `
-      <div class="skeleton img"></div>
-      <div class="skeleton line wide"></div>
-      <div class="skeleton line narrow"></div>
-    `;
-    frag.appendChild(card);
+// ===== Global Search Bar Handler =====
+document.addEventListener("DOMContentLoaded", () => {
+  const searchForm = document.querySelector(".search-bar");
+  const searchInput = document.querySelector(".search-bar input");
+  if (searchForm) {
+    searchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+      if (query.length > 0) {
+        localStorage.setItem("medidexSearchQuery", query);
+        if (!location.pathname.endsWith("/medicines.html"))
+          window.location.href = "medicines.html";
+        else applyFilters();
+      }
+    });
   }
-  grid.appendChild(frag);
+});
+
+// ===== Category filter + render =====
+function uniqueCategories(items) {
+  return Array.from(new Set(items.map((m) => m.category))).sort();
+}
+function setGridSingleClass(grid, count) {
+  grid.classList.toggle("single", count === 1);
 }
 
-// ===== Alphabet filter click handler =====
-function setupAlphabetFilter() {
-  const alphabetContainer = document.querySelector(".alphabet-filter");
-  if (!alphabetContainer) return;
-
-  alphabetContainer.addEventListener("click", (e) => {
-    if (e.target.tagName === "BUTTON") {
-      const letter = e.target.textContent;
-      const filtered = filterMedicinesByLetter(letter);
-      renderMedicines(filtered);
-      highlightActiveLetter(letter);
-    }
-  });
-}
-
-function highlightActiveLetter(letter) {
-  const buttons = document.querySelectorAll(".alphabet-filter button");
-  buttons.forEach((btn) => {
-    btn.classList.toggle("active", btn.textContent === letter);
-  });
-}
-
-// ===== Medicines page script =====
 function renderMedicines(meds) {
   const grid = document.querySelector(".medicine-grid");
   const countEl = document.getElementById("results-count");
   if (!grid) return;
-
   grid.innerHTML = "";
   if (countEl)
     countEl.textContent = `${meds.length} result${
       meds.length === 1 ? "" : "s"
     }`;
 
+  setGridSingleClass(grid, meds.length);
+
   if (meds.length === 0) {
-    grid.innerHTML = `<p style="text-align:center; grid-column: 1/-1; font-weight: bold;">No medicines found.</p>`;
+    grid.innerHTML = `<p style="text-align:center; grid-column:1/-1; font-weight:600;">No medicines found.</p>`;
     return;
   }
 
@@ -182,204 +178,437 @@ function renderMedicines(meds) {
     const card = document.createElement("div");
     card.classList.add("medicine-card");
     card.innerHTML = `
-      <div class="img-wrap">
-        <img src="${med.image}" alt="${med.name}" loading="lazy" />
-      </div>
+      <div class="img-wrap"><img src="${med.image}" alt="${
+      med.name
+    }" loading="lazy" /></div>
       <span class="badge">${med.category}</span>
       <h3><a href="medicine-details.html?id=${med.id}">${med.name}</a></h3>
       <p><strong>Category:</strong> ${med.category}</p>
       <p>${med.description.substring(0, 80)}...</p>
+      <div class="card-actions">
+        <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
+        <button class="btn primary buy-now" data-id="${med.id}">Buy now</button>
+      </div>
     `;
-
-    // Make entire card clickable
-    card.addEventListener("click", () => {
-      window.location.href = `medicine-details.html?id=${med.id}`;
-    });
-
+    card.addEventListener(
+      "click",
+      () => (window.location.href = `medicine-details.html?id=${med.id}`)
+    );
+    card
+      .querySelectorAll(".btn")
+      .forEach((btn) =>
+        btn.addEventListener("click", (e) => e.stopPropagation())
+      );
     grid.appendChild(card);
   });
 }
 
+function applyFilters() {
+  const searchInput = document.querySelector(".search-bar input");
+  const query = (
+    searchInput?.value ||
+    localStorage.getItem("medidexSearchQuery") ||
+    ""
+  ).toLowerCase();
+  const catSel = document.getElementById("filter-category");
+  const selectedCat = catSel ? catSel.value : "";
+  let list = medicines.slice();
+  if (query) list = list.filter((m) => m.name.toLowerCase().includes(query));
+  if (selectedCat) list = list.filter((m) => m.category === selectedCat);
+  renderMedicines(list);
+}
+
+function setupFilters() {
+  const catSel = document.getElementById("filter-category");
+  if (catSel && !catSel.dataset.ready) {
+    catSel.innerHTML =
+      '<option value="">All categories</option>' +
+      uniqueCategories(medicines)
+        .map((c) => `<option value="${c}">${c}</option>`)
+        .join("");
+    catSel.addEventListener("change", applyFilters);
+    catSel.dataset.ready = "1";
+  }
+}
+
+// ===== Legacy helpers kept for compatibility =====
 function filterMedicinesByQuery(query) {
   const lower = query.toLowerCase();
   return medicines.filter((med) => med.name.toLowerCase().includes(lower));
 }
-
 function filterMedicinesByLetter(letter) {
   return medicines.filter(
     (med) => med.name.charAt(0).toLowerCase() === letter.toLowerCase()
   );
 }
-
-function applyCategoryFilter(meds, category) {
-  if (!category) return meds;
-  return meds.filter((m) => m.category === category);
+function setupAlphabetFilter() {
+  const alphabetContainer = document.querySelector(".alphabet-filter");
+  if (!alphabetContainer) return;
+  alphabetContainer.addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") {
+      const letter = e.target.textContent;
+      const filtered = filterMedicinesByLetter(letter);
+      renderMedicines(filtered);
+      const buttons = document.querySelectorAll(".alphabet-filter button");
+      buttons.forEach((btn) =>
+        btn.classList.toggle("active", btn.textContent === letter)
+      );
+    }
+  });
 }
 
-// ===== Toolbar setup =====
-function setupToolbar() {
-  const categorySelect = document.getElementById("filter-category");
-  const sortSelect = document.getElementById("sort-by");
-  if (!categorySelect || !sortSelect) return;
-
-  // Populate categories
-  const cats = uniqueCategories(medicines);
-  categorySelect.innerHTML =
-    '<option value="">All categories</option>' +
-    cats.map((c) => `<option value="${c}">${c}</option>`).join("");
-
-  function refresh() {
-    const queryInput = document.querySelector(".search-bar input");
-    const query = (queryInput?.value || "").trim().toLowerCase();
-    const category = categorySelect.value;
-    const sortBy = sortSelect.value;
-
-    let list = medicines.slice();
-    if (query) list = list.filter((m) => m.name.toLowerCase().includes(query));
-    list = applyCategoryFilter(list, category);
-    list = sortMeds(list, sortBy);
-    renderMedicines(list);
+// ===== Cart state =====
+const cart = { items: [] }; // {id, qty}
+function saveCart() {
+  localStorage.setItem("medidexCart", JSON.stringify(cart.items));
+}
+function loadCart() {
+  try {
+    cart.items = JSON.parse(localStorage.getItem("medidexCart") || "[]");
+  } catch {
+    cart.items = [];
   }
-
-  categorySelect.addEventListener("change", refresh);
-  sortSelect.addEventListener("change", refresh);
-
-  // Initial render after small skeleton
-  showSkeletons(6);
-  setTimeout(refresh, 250);
+  updateCartBadge();
+}
+function findMed(id) {
+  return medicines.find((m) => m.id === id);
+}
+function cartTotal() {
+  return cart.items.reduce(
+    (sum, it) => sum + (findMed(it.id)?.price || 0) * it.qty,
+    0
+  );
+}
+function updateCartBadge() {
+  const c = document.getElementById("cart-count");
+  if (c) c.textContent = cart.items.reduce((s, it) => s + it.qty, 0);
+}
+function addToCart(id, qty = 1) {
+  const it = cart.items.find((i) => i.id === id);
+  if (it) it.qty += qty;
+  else cart.items.push({ id, qty });
+  saveCart();
+  updateCartBadge();
+  renderCart?.();
+}
+function removeFromCart(id) {
+  cart.items = cart.items.filter((i) => i.id !== id);
+  saveCart();
+  updateCartBadge();
+  renderCart?.();
+}
+function setQty(id, qty) {
+  const it = cart.items.find((i) => i.id === id);
+  if (!it) return;
+  it.qty = Math.max(1, qty);
+  saveCart();
+  updateCartBadge();
+  renderCart?.();
 }
 
-// ===== On medicines.html page load =====
+// ===== Cart Drawer UI (used on pages that include the drawer) =====
+function money(n) {
+  return `$${n.toFixed(2)}`;
+}
+function openCart() {
+  const d = document.getElementById("cart-drawer");
+  if (d) {
+    d.setAttribute("aria-hidden", "false");
+  }
+}
+function closeCart() {
+  const d = document.getElementById("cart-drawer");
+  if (d) {
+    d.setAttribute("aria-hidden", "true");
+  }
+}
+function renderCart() {
+  const list = document.getElementById("cart-items");
+  const totalEl = document.getElementById("cart-total");
+  if (!list || !totalEl) return;
+  list.innerHTML = "";
+  cart.items.forEach((it) => {
+    const med = findMed(it.id);
+    if (!med) return;
+    const row = document.createElement("div");
+    row.className = "cart-item";
+    row.innerHTML = `
+      <img src="${med.image}" alt="${med.name}">
+      <div>
+        <div class="cart-item-title">${med.name}</div>
+        <div class="cart-item-meta">${med.category} · ${money(med.price)}</div>
+        <div class="cart-qty">
+          <button class="qty-btn" aria-label="Decrease">-</button>
+          <span>${it.qty}</span>
+          <button class="qty-btn" aria-label="Increase">+</button>
+          <button class="icon-btn" style="margin-left:8px">Remove</button>
+        </div>
+      </div>
+      <div>${money(med.price * it.qty)}</div>`;
+    const [dec, , inc, rem] = row.querySelectorAll("button");
+    dec.onclick = () => setQty(it.id, it.qty - 1);
+    inc.onclick = () => setQty(it.id, it.qty + 1);
+    rem.onclick = () => removeFromCart(it.id);
+    list.appendChild(row);
+  });
+  totalEl.textContent = money(cartTotal());
+}
+
+function buyNow(id) {
+  addToCart(id, 1);
+  openCheckout();
+}
+
+// ===== Checkout Modal (on pages that include modal) =====
+function openCheckout() {
+  const m = document.getElementById("checkout-modal");
+  if (m) {
+    m.setAttribute("aria-hidden", "false");
+  }
+}
+function closeCheckout() {
+  const m = document.getElementById("checkout-modal");
+  if (m) {
+    m.setAttribute("aria-hidden", "true");
+  }
+}
+
+function setupCartUI() {
+  const btn = document.getElementById("cart-button");
+  if (btn) btn.onclick = openCart;
+  const closeBtn = document.getElementById("cart-close");
+  if (closeBtn) closeBtn.onclick = closeCart;
+  const backdrop = document.querySelector("#cart-drawer .cart-drawer-backdrop");
+  if (backdrop) backdrop.onclick = closeCart;
+  const checkoutBtn = document.getElementById("checkout-button");
+  if (checkoutBtn) checkoutBtn.onclick = openCheckout;
+
+  const modalClose = document.getElementById("checkout-close");
+  if (modalClose) modalClose.onclick = closeCheckout;
+  const modalBackdrop = document.querySelector(
+    "#checkout-modal .modal-backdrop"
+  );
+  if (modalBackdrop) modalBackdrop.onclick = closeCheckout;
+  const cancelBtn = document.getElementById("checkout-cancel");
+  if (cancelBtn) cancelBtn.onclick = closeCheckout;
+
+  const form = document.getElementById("checkout-form");
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const enrichedItems = cart.items.map((it) => {
+        const med = findMed(it.id);
+        return {
+          id: it.id,
+          name: med?.name || `Medicine #${it.id}`,
+          price: Number(med?.price || 0),
+          qty: it.qty,
+        };
+      });
+
+      try {
+        const resp = await fetch("http://localhost:3001/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer: {
+              name: data.name,
+              phone: data.phone,
+              location: data.location,
+              doctorRecommended: data.doctorRecommended || "no",
+            },
+            items: enrichedItems,
+          }),
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        const { order } = await resp.json();
+        alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
+        cart.items = [];
+        saveCart();
+        updateCartBadge();
+        renderCart?.();
+        closeCheckout?.();
+        closeCart?.();
+        window.location.href = "cart.html";
+      } catch (err) {
+        alert("Checkout failed. Please try again.");
+        console.error(err);
+      }
+    };
+  }
+}
+
+// ===== Delegated handlers for Add to cart / Buy now (works on all pages) =====
+document.addEventListener("click", (e) => {
+  const addBtn = e.target.closest(".add-to-cart");
+  if (addBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = Number(addBtn.dataset.id);
+    if (id) addToCart(id, 1);
+    return;
+  }
+  const buyBtn = e.target.closest(".buy-now");
+  if (buyBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = Number(buyBtn.dataset.id);
+    if (id) buyNow(id);
+    return;
+  }
+});
+
+// ===== Medicines page load =====
 function onMedicinesPageLoad() {
   if (!document.querySelector(".medicine-grid")) return;
-
   setupAlphabetFilter();
-  setupToolbar();
-
-  // Keep existing search query behavior
-  let query = localStorage.getItem("medidexSearchQuery") || "";
+  setupFilters();
+  const q = localStorage.getItem("medidexSearchQuery") || "";
   localStorage.removeItem("medidexSearchQuery");
+  const input = document.querySelector(".search-bar input");
+  if (input && q) {
+    input.value = q;
+  }
+  applyFilters();
+}
 
-  const searchInput = document.querySelector(".search-bar input");
-  if (query) {
-    searchInput.value = query;
+// ===== Cart page (cart.html) =====
+function onCartPageLoad() {
+  const host = document.getElementById("cart-page-items");
+  const totalEl = document.getElementById("cart-page-total");
+  if (!host || !totalEl) return;
+
+  function renderCartPage() {
+    host.innerHTML = "";
+    cart.items.forEach((it) => {
+      const med = findMed(it.id);
+      if (!med) return;
+      const row = document.createElement("div");
+      row.className = "cart-item";
+      row.innerHTML = `
+        <img src="${med.image}" alt="${med.name}">
+        <div>
+          <div class="cart-item-title">${med.name}</div>
+          <div class="cart-item-meta">${med.category} · $${med.price.toFixed(
+        2
+      )}</div>
+          <div class="cart-qty">
+            <button class="qty-btn dec">-</button>
+            <span>${it.qty}</span>
+            <button class="qty-btn inc">+</button>
+            <button class="icon-btn remove" style="margin-left:8px">Remove</button>
+          </div>
+        </div>
+        <div>$${(med.price * it.qty).toFixed(2)}</div>
+      `;
+      row.querySelector(".dec").onclick = () => {
+        setQty(it.id, it.qty - 1);
+        renderCartPage();
+      };
+      row.querySelector(".inc").onclick = () => {
+        setQty(it.id, it.qty + 1);
+        renderCartPage();
+      };
+      row.querySelector(".remove").onclick = () => {
+        removeFromCart(it.id);
+        renderCartPage();
+      };
+      host.appendChild(row);
+    });
+    totalEl.textContent = `$${cartTotal().toFixed(2)}`;
+    updateCartBadge();
+  }
+
+  renderCartPage();
+
+  const form = document.getElementById("cart-checkout-form");
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const enrichedItems = cart.items.map((it) => {
+        const med = findMed(it.id);
+        return {
+          id: it.id,
+          name: med?.name || `Medicine #${it.id}`,
+          price: Number(med?.price || 0),
+          qty: it.qty,
+        };
+      });
+
+      try {
+        const resp = await fetch("http://localhost:3001/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer: {
+              name: data.name,
+              phone: data.phone,
+              location: data.location,
+              doctorRecommended: data.doctorRecommended || "no",
+            },
+            items: enrichedItems,
+          }),
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        const { order } = await resp.json();
+        alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
+        cart.items = [];
+        saveCart();
+        renderCartPage();
+        window.location.href = "index.html";
+      } catch (err) {
+        alert("Checkout failed. Please try again.");
+        console.error(err);
+      }
+    };
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  loadCart();
+  setupCartUI();
   onMedicinesPageLoad();
 });
 
-// ===== Autocomplete suggestions for search bar =====
+// ===== Suggestions for search (minimal) =====
 document.addEventListener("DOMContentLoaded", () => {
-  const searchInputElem = document.querySelector(".search-bar input");
-  const suggestionsBox = document.querySelector(".search-bar .suggestions");
-
-  if (!searchInputElem || !suggestionsBox) return;
-
-  function highlight(text, query) {
-    const idx = text.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return text;
-    const before = text.slice(0, idx);
-    const match = text.slice(idx, idx + query.length);
-    const after = text.slice(idx + query.length);
-    return `${before}<mark>${match}</mark>${after}`;
-  }
-
-  searchInputElem.addEventListener("input", () => {
-    const query = searchInputElem.value.trim().toLowerCase();
-
-    if (!query) {
-      suggestionsBox.innerHTML = "";
-      suggestionsBox.classList.remove("active");
+  const input = document.querySelector(".search-bar input");
+  const box = document.querySelector(".search-bar .suggestions");
+  if (!input || !box) return;
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      box.innerHTML = "";
+      box.classList.remove("active");
       return;
     }
-
-    const matches = medicines.filter((med) =>
-      med.name.toLowerCase().startsWith(query)
-    );
-
+    const matches = medicines
+      .filter((m) => m.name.toLowerCase().includes(q))
+      .slice(0, 5);
     if (matches.length === 0) {
-      suggestionsBox.innerHTML = "<div>No matches found</div>";
-      suggestionsBox.classList.add("active");
+      box.innerHTML = "<div>No matches</div>";
+      box.classList.add("active");
       return;
     }
-
-    suggestionsBox.innerHTML = matches
-      .slice(0, 5)
-      .map(
-        (med) =>
-          `<div tabindex="0" role="option" aria-selected="false">${highlight(
-            med.name,
-            query
-          )}</div>`
-      )
+    box.innerHTML = matches
+      .map((m) => `<div tabindex="0">${m.name}</div>`)
       .join("");
-    suggestionsBox.classList.add("active");
+    box.classList.add("active");
   });
-
-  // Click a suggestion to fill input
-  suggestionsBox.addEventListener("click", (e) => {
+  box.addEventListener("click", (e) => {
     if (e.target.tagName === "DIV") {
-      searchInputElem.value = e.target.textContent;
-      suggestionsBox.innerHTML = "";
-      suggestionsBox.classList.remove("active");
-      searchInputElem.focus();
+      input.value = e.target.textContent;
+      box.innerHTML = "";
+      box.classList.remove("active");
+      applyFilters();
     }
   });
-
-  // Keyboard navigation inside suggestions
-  suggestionsBox.addEventListener("keydown", (e) => {
-    const active = suggestionsBox.querySelector(".active");
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!active) {
-        suggestionsBox.firstChild.focus();
-        suggestionsBox.firstChild.classList.add("active");
-      } else {
-        active.classList.remove("active");
-        if (active.nextSibling) {
-          active.nextSibling.focus();
-          active.nextSibling.classList.add("active");
-        } else {
-          suggestionsBox.firstChild.focus();
-          suggestionsBox.firstChild.classList.add("active");
-        }
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (!active) {
-        suggestionsBox.lastChild.focus();
-        suggestionsBox.lastChild.classList.add("active");
-      } else {
-        active.classList.remove("active");
-        if (active.previousSibling) {
-          active.previousSibling.focus();
-          active.previousSibling.classList.add("active");
-        } else {
-          suggestionsBox.lastChild.focus();
-          suggestionsBox.lastChild.classList.add("active");
-        }
-      }
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (active) {
-        searchInputElem.value = active.textContent;
-        suggestionsBox.innerHTML = "";
-        suggestionsBox.classList.remove("active");
-        searchInputElem.form.requestSubmit();
-      }
-    }
-  });
-
-  // Hide suggestions when clicking outside
   document.addEventListener("click", (e) => {
-    if (
-      !searchInputElem.contains(e.target) &&
-      !suggestionsBox.contains(e.target)
-    ) {
-      suggestionsBox.innerHTML = "";
-      suggestionsBox.classList.remove("active");
+    if (!box.contains(e.target) && e.target !== input) {
+      box.innerHTML = "";
+      box.classList.remove("active");
     }
   });
 });
