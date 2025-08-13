@@ -1,4 +1,8 @@
-generator client { provider = "prisma-client-js" }
+// server/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
@@ -6,24 +10,26 @@ datasource db {
 }
 
 model Order {
-  id                 String   @id @default(cuid())
-  createdAt          DateTime @default(now())
-  name               String
-  phone              String
-  location           String
-  doctorRecommended  Boolean  @default(false)
-  total              Decimal  @db.Decimal(10, 2)
-  items              OrderItem[]
+  id                String      @id @default(cuid())
+  createdAt         DateTime    @default(now())
+  name              String
+  phone             String
+  location          String
+  doctorRecommended Boolean     @default(false)
+  total             Decimal     @db.Decimal(10, 2)
+  items             OrderItem[]
+
+  @@index([createdAt])
 }
 
 model OrderItem {
   id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
-  medId     Int?
+  productId Int
   name      String
   price     Decimal @db.Decimal(10, 2)
-  qty       Int
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  quantity  Int
 
   @@index([orderId])
 }
