@@ -68,6 +68,7 @@
 
     <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
 
+    <!-- Drawer + Checkout -->
     <div id="cart-drawer" class="cart-drawer" aria-hidden="true">
       <div class="cart-drawer-inner">
         <div class="cart-drawer-header">
@@ -136,7 +137,10 @@
             const card = document.createElement("div");
             card.className = "medicine-card";
             card.innerHTML = `
-              <img src="${med.image}" alt="${med.name}" loading="lazy">
+              <div class="img-wrap"><img src="${med.image}" alt="${
+              med.name
+            }" loading="lazy"></div>
+              <span class="badge">${med.category}</span>
               <h3><a href="medicine-details.html?id=${med.id}">${
               med.name
             }</a></h3>

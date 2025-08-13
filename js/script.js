@@ -393,7 +393,16 @@ function setupCartUI() {
             items: enrichedItems,
           }),
         });
-        if (!resp.ok) throw new Error(await resp.text());
+        let errorText = "";
+        if (!resp.ok) {
+          try {
+            const j = await resp.json();
+            errorText = j?.error || JSON.stringify(j);
+          } catch {
+            errorText = await resp.text();
+          }
+          throw new Error(errorText || `HTTP ${resp.status}`);
+        }
         const { order } = await resp.json();
         alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
         cart.items = [];
@@ -404,8 +413,8 @@ function setupCartUI() {
         closeCart?.();
         window.location.href = "cart.html";
       } catch (err) {
-        alert("Checkout failed. Please try again.");
-        console.error(err);
+        alert(`Checkout failed: ${err?.message || "Unknown error"}`);
+        console.error("Checkout error:", err);
       }
     };
   }
@@ -521,7 +530,16 @@ function onCartPageLoad() {
             items: enrichedItems,
           }),
         });
-        if (!resp.ok) throw new Error(await resp.text());
+        let errorText = "";
+        if (!resp.ok) {
+          try {
+            const j = await resp.json();
+            errorText = j?.error || JSON.stringify(j);
+          } catch {
+            errorText = await resp.text();
+          }
+          throw new Error(errorText || `HTTP ${resp.status}`);
+        }
         const { order } = await resp.json();
         alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
         cart.items = [];
@@ -529,8 +547,8 @@ function onCartPageLoad() {
         renderCartPage();
         window.location.href = "index.html";
       } catch (err) {
-        alert("Checkout failed. Please try again.");
-        console.error(err);
+        alert(`Checkout failed: ${err?.message || "Unknown error"}`);
+        console.error("Checkout error:", err);
       }
     };
   }
