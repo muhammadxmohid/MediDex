@@ -1,0 +1,20 @@
+{
+  "name": "medidex",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "cd server && npm install && npx prisma generate",
+    "dev": "concurrently \"npm:dev:server\" \"npm:dev:static\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:static": "http-server -p 5173 -c-1 .",
+    "db:migrate": "npm --prefix server run prisma:migrate",
+    "db:studio": "npm --prefix server run prisma:studio",
+    "start": "concurrently \"npm:server\" \"npm:static\"",
+    "server": "npm --prefix server start",
+    "static": "http-server -p 8080 -c-1 ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "http-server": "^14.1.1"
+  }
+}
