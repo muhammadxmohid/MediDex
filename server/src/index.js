@@ -2,13 +2,12 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import { notifyOwner } from "./notify.js";
 
 const app = express();
 const prisma = new PrismaClient();
 const PORT = Number(process.env.PORT || 3001);
 
-// CORS: allow your frontend origins
+// CORS: list your frontend origins only (no trailing slash, no path)
 const allowedOrigins = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((s) => s.trim())
@@ -73,7 +72,6 @@ app.post("/api/orders", async (req, res) => {
       include: { items: true },
     });
 
-    notifyOwner(order).catch(() => {});
     return res.status(201).json({ ok: true, order });
   } catch (err) {
     console.error("Order error:", err?.message || err);
