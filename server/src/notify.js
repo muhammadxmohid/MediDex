@@ -1,5 +1,3 @@
-// Lightweight owner notifications. Use any one: Telegram, Discord, or Slack webhook.
-// Node 18+ has global fetch.
 function formatOrderText(order) {
   const items = order.items
     .map((i) => `• ${i.name} x${i.qty} — $${Number(i.price).toFixed(2)}`)
@@ -28,7 +26,6 @@ async function notifyTelegram(order) {
     body: JSON.stringify({ chat_id: chatId, text }),
   });
 }
-
 async function notifyDiscord(order) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url) return;
@@ -39,7 +36,6 @@ async function notifyDiscord(order) {
     body: JSON.stringify({ content }),
   });
 }
-
 async function notifySlack(order) {
   const url = process.env.SLACK_WEBHOOK_URL;
   if (!url) return;
@@ -52,13 +48,9 @@ async function notifySlack(order) {
 }
 
 export async function notifyOwner(order) {
-  try {
-    await Promise.allSettled([
-      notifyTelegram(order),
-      notifyDiscord(order),
-      notifySlack(order),
-    ]);
-  } catch {
-    // ignore errors from notification integrations
-  }
+  await Promise.allSettled([
+    notifyTelegram(order),
+    notifyDiscord(order),
+    notifySlack(order),
+  ]);
 }

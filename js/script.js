@@ -1,3 +1,9 @@
+// ===== Config: API base for checkout (Production uses Railway URL) =====
+const API_BASE =
+  location.hostname === "localhost" || location.hostname === "127.0.0.1"
+    ? "http://localhost:3001"
+    : "https://medidex-production.up.railway.app";
+
 // ===== Sample Medicines Data =====
 const medicines = [
   {
@@ -98,7 +104,7 @@ const medicines = [
   },
 ];
 
-// ===== Hamburger menu toggle =====
+// ===== Hamburger =====
 document.addEventListener("DOMContentLoaded", () => {
   const hamburger = document.querySelector(".hamburger");
   const navMenu = document.querySelector("nav");
@@ -108,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 });
 
-// ===== Theme toggle (persisted) =====
+// ===== Theme (persisted) =====
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.body;
   const toggle = document.getElementById("theme-toggle");
@@ -131,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ===== Global Search Bar Handler =====
+// ===== Search submit =====
 document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.querySelector(".search-bar");
   const searchInput = document.querySelector(".search-bar input");
@@ -149,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ===== Category filter + render =====
+// ===== Filters + render =====
 function uniqueCategories(items) {
   return Array.from(new Set(items.map((m) => m.category))).sort();
 }
@@ -166,14 +172,11 @@ function renderMedicines(meds) {
     countEl.textContent = `${meds.length} result${
       meds.length === 1 ? "" : "s"
     }`;
-
   setGridSingleClass(grid, meds.length);
-
   if (meds.length === 0) {
     grid.innerHTML = `<p style="text-align:center; grid-column:1/-1; font-weight:600;">No medicines found.</p>`;
     return;
   }
-
   meds.forEach((med) => {
     const card = document.createElement("div");
     card.classList.add("medicine-card");
@@ -188,8 +191,7 @@ function renderMedicines(meds) {
       <div class="card-actions">
         <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
         <button class="btn primary buy-now" data-id="${med.id}">Buy now</button>
-      </div>
-    `;
+      </div>`;
     card.addEventListener(
       "click",
       () => (window.location.href = `medicine-details.html?id=${med.id}`)
@@ -202,7 +204,6 @@ function renderMedicines(meds) {
     grid.appendChild(card);
   });
 }
-
 function applyFilters() {
   const searchInput = document.querySelector(".search-bar input");
   const query = (
@@ -217,7 +218,6 @@ function applyFilters() {
   if (selectedCat) list = list.filter((m) => m.category === selectedCat);
   renderMedicines(list);
 }
-
 function setupFilters() {
   const catSel = document.getElementById("filter-category");
   if (catSel && !catSel.dataset.ready) {
@@ -231,34 +231,8 @@ function setupFilters() {
   }
 }
 
-// ===== Legacy helpers kept for compatibility =====
-function filterMedicinesByQuery(query) {
-  const lower = query.toLowerCase();
-  return medicines.filter((med) => med.name.toLowerCase().includes(lower));
-}
-function filterMedicinesByLetter(letter) {
-  return medicines.filter(
-    (med) => med.name.charAt(0).toLowerCase() === letter.toLowerCase()
-  );
-}
-function setupAlphabetFilter() {
-  const alphabetContainer = document.querySelector(".alphabet-filter");
-  if (!alphabetContainer) return;
-  alphabetContainer.addEventListener("click", (e) => {
-    if (e.target.tagName === "BUTTON") {
-      const letter = e.target.textContent;
-      const filtered = filterMedicinesByLetter(letter);
-      renderMedicines(filtered);
-      const buttons = document.querySelectorAll(".alphabet-filter button");
-      buttons.forEach((btn) =>
-        btn.classList.toggle("active", btn.textContent === letter)
-      );
-    }
-  });
-}
-
-// ===== Cart state =====
-const cart = { items: [] }; // {id, qty}
+// ===== Cart (localStorage) =====
+const cart = { items: [] };
 function saveCart() {
   localStorage.setItem("medidexCart", JSON.stringify(cart.items));
 }
@@ -306,7 +280,7 @@ function setQty(id, qty) {
   renderCart?.();
 }
 
-// ===== Cart Drawer UI (used on pages that include the drawer) =====
+// Drawer rendering (if present)
 function money(n) {
   return `$${n.toFixed(2)}`;
 }
@@ -353,13 +327,12 @@ function renderCart() {
   });
   totalEl.textContent = money(cartTotal());
 }
-
 function buyNow(id) {
   addToCart(id, 1);
   openCheckout();
 }
 
-// ===== Checkout Modal (on pages that include modal) =====
+// Checkout (if modal present)
 function openCheckout() {
   const m = document.getElementById("checkout-modal");
   if (m) {
@@ -372,7 +345,6 @@ function closeCheckout() {
     m.setAttribute("aria-hidden", "true");
   }
 }
-
 function setupCartUI() {
   const btn = document.getElementById("cart-button");
   if (btn) btn.onclick = openCart;
@@ -408,7 +380,7 @@ function setupCartUI() {
       });
 
       try {
-        const resp = await fetch("http://localhost:3001/api/orders", {
+        const resp = await fetch(`${API_BASE}/api/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -439,7 +411,7 @@ function setupCartUI() {
   }
 }
 
-// ===== Delegated handlers for Add to cart / Buy now (works on all pages) =====
+// Delegated cart buttons (all pages)
 document.addEventListener("click", (e) => {
   const addBtn = e.target.closest(".add-to-cart");
   if (addBtn) {
@@ -459,10 +431,9 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ===== Medicines page load =====
+// Medicines page
 function onMedicinesPageLoad() {
   if (!document.querySelector(".medicine-grid")) return;
-  setupAlphabetFilter();
   setupFilters();
   const q = localStorage.getItem("medidexSearchQuery") || "";
   localStorage.removeItem("medidexSearchQuery");
@@ -473,7 +444,7 @@ function onMedicinesPageLoad() {
   applyFilters();
 }
 
-// ===== Cart page (cart.html) =====
+// Cart page
 function onCartPageLoad() {
   const host = document.getElementById("cart-page-items");
   const totalEl = document.getElementById("cart-page-total");
@@ -500,8 +471,7 @@ function onCartPageLoad() {
             <button class="icon-btn remove" style="margin-left:8px">Remove</button>
           </div>
         </div>
-        <div>$${(med.price * it.qty).toFixed(2)}</div>
-      `;
+        <div>$${(med.price * it.qty).toFixed(2)}</div>`;
       row.querySelector(".dec").onclick = () => {
         setQty(it.id, it.qty - 1);
         renderCartPage();
@@ -538,7 +508,7 @@ function onCartPageLoad() {
       });
 
       try {
-        const resp = await fetch("http://localhost:3001/api/orders", {
+        const resp = await fetch(`${API_BASE}/api/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -572,7 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
   onMedicinesPageLoad();
 });
 
-// ===== Suggestions for search (minimal) =====
+// Suggestions (minimal)
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.querySelector(".search-bar input");
   const box = document.querySelector(".search-bar .suggestions");

@@ -12,7 +12,6 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -37,7 +36,6 @@ app.post("/api/orders", async (req, res) => {
     if (!name || !phone || !location) {
       return res.status(400).json({ error: "Missing name/phone/location" });
     }
-
     const normalized = items.map((it) => {
       if (!it?.id || !it?.qty || !it?.name || typeof it.price !== "number") {
         throw new Error("Each item must include id, name, price, qty");
@@ -49,7 +47,6 @@ app.post("/api/orders", async (req, res) => {
         qty: Number(it.qty),
       };
     });
-
     const total = normalized.reduce((sum, it) => sum + it.price * it.qty, 0);
 
     const order = await prisma.order.create({
@@ -66,9 +63,7 @@ app.post("/api/orders", async (req, res) => {
       include: { items: true },
     });
 
-    // Fire-and-forget owner notification
     notifyOwner(order).catch(() => {});
-
     return res.status(201).json({ ok: true, order });
   } catch (err) {
     console.error(err);
