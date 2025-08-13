@@ -63,27 +63,27 @@ app.post("/api/orders", async (req, res) => {
 
     // Accept either {id, qty} or {productId, quantity}; always require name, price
     const normalizedItems = items.map((it) => {
-      const productId = Number(it.productId ?? it.id);
-      const quantity = Number(it.quantity ?? it.qty);
+      const medId = Number(it.productId ?? it.id);
+      const qty = Number(it.quantity ?? it.qty);
       const priceNum = Number(it.price);
       const nameStr = String(it.name || "");
 
-      if (!productId || !quantity || !Number.isFinite(priceNum) || !nameStr) {
+      if (!medId || !qty || !Number.isFinite(priceNum) || !nameStr) {
         throw new Error(
           "Each item must include productId/id, name, price (number), quantity/qty"
         );
       }
 
       return {
-        productId,
+        medId,
         name: nameStr,
         price: new Prisma.Decimal(priceNum.toFixed(2)),
-        quantity,
+        qty,
       };
     });
 
     const totalNum = normalizedItems.reduce(
-      (sum, it) => sum + Number(it.price) * it.quantity,
+      (sum, it) => sum + Number(it.price) * it.qty,
       0
     );
     const total = new Prisma.Decimal(totalNum.toFixed(2));
