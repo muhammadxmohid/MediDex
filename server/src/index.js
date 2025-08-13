@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const app = express();
 const prisma = new PrismaClient();
@@ -27,7 +27,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "")
 
 const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // allow curl/Postman
+    if (!origin) return cb(null, true); // curl/Postman
     const normalized = normalizeOrigin(origin);
     if (allowedOrigins.length === 0 || allowedOrigins.includes(normalized)) {
       return cb(null, true);
@@ -45,10 +45,8 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json());
 
-// Health
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Create order
 app.post("/api/orders", async (req, res) => {
   try {
     const { customer, items } = req.body || {};
@@ -57,28 +55,38 @@ app.post("/api/orders", async (req, res) => {
         .status(400)
         .json({ error: "Invalid payload: missing customer or items" });
     }
-    const { name, phone, location, doctorRecommended } = customer;
+
+    const { name, phone, location, doctorRecommended } = customer || {};
     if (!name || !phone || !location) {
       return res.status(400).json({ error: "Missing name/phone/location" });
     }
 
-    // Map incoming items {id, name, price, qty} -> Prisma model fields {productId, name, price, quantity}
+    // Accept either {id, qty} or {productId, quantity}; always require name, price
     const normalizedItems = items.map((it) => {
-      if (!it?.id || !it?.qty || !it?.name || typeof it.price !== "number") {
-        throw new Error("Each item must include id, name, price (number), qty");
+      const productId = Number(it.productId ?? it.id);
+      const quantity = Number(it.quantity ?? it.qty);
+      const priceNum = Number(it.price);
+      const nameStr = String(it.name || "");
+
+      if (!productId || !quantity || !Number.isFinite(priceNum) || !nameStr) {
+        throw new Error(
+          "Each item must include productId/id, name, price (number), quantity/qty"
+        );
       }
+
       return {
-        productId: Number(it.id),
-        name: String(it.name),
-        price: Number(it.price),
-        quantity: Number(it.qty),
+        productId,
+        name: nameStr,
+        price: new Prisma.Decimal(priceNum.toFixed(2)),
+        quantity,
       };
     });
 
-    const total = normalizedItems.reduce(
-      (sum, it) => sum + it.price * it.quantity,
+    const totalNum = normalizedItems.reduce(
+      (sum, it) => sum + Number(it.price) * it.quantity,
       0
     );
+    const total = new Prisma.Decimal(totalNum.toFixed(2));
 
     const order = await prisma.order.create({
       data: {
@@ -94,16 +102,14 @@ app.post("/api/orders", async (req, res) => {
       include: { items: true },
     });
 
-    return res.status(201).json({ ok: true, order });
+    return res.status(201).json({ ok: true, orderId: order.id, order });
   } catch (err) {
-    console.error("Order error:", err?.message || err);
-    return res
-      .status(500)
-      .json({ error: "Server error while creating order. Check logs." });
+    console.error("Order error:", err);
+    const message = err?.message || "Server error while creating order";
+    return res.status(500).json({ error: message });
   }
 });
 
-// Get order
 app.get("/api/orders/:id", async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
