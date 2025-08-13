@@ -1,11 +1,7 @@
 /* =========================
    MediDex - Refined UI (Light/Dark) + Uniform Cards + Cart/Checkout
    ========================= */
-
-/* Google font */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
-
-/* Theme tokens */
 :root {
   --bg: #f6f8fb;
   --text: #101828;
@@ -32,8 +28,6 @@ body.dark {
   --ring: rgba(76, 163, 255, 0.16);
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
 }
-
-/* Reset/base */
 *,
 *::before,
 *::after {
@@ -69,8 +63,6 @@ img {
   max-width: 100%;
   height: auto;
 }
-
-/* Header */
 header {
   background: var(--brand);
   color: #fff;
@@ -104,8 +96,6 @@ nav a {
 nav a:hover {
   background: rgba(255, 255, 255, 0.12);
 }
-
-/* hamburger (mobile only) */
 .hamburger {
   display: none;
   cursor: pointer;
@@ -119,8 +109,6 @@ nav a:hover {
   display: block;
   border-radius: 2px;
 }
-
-/* Theme + cart buttons */
 .theme-toggle {
   margin-left: 8px;
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -154,8 +142,6 @@ nav a:hover {
   display: grid;
   place-items: center;
 }
-
-/* Search bar */
 .search-bar {
   position: relative;
   display: flex;
@@ -220,12 +206,6 @@ nav a:hover {
 .suggestions div[aria-selected="true"] {
   background: var(--surface-2);
 }
-.suggestions mark {
-  background: rgba(255, 230, 0, 0.35);
-  color: inherit;
-}
-
-/* Toolbar under search */
 .toolbar {
   max-width: 1100px;
   margin: 0 auto;
@@ -234,12 +214,6 @@ nav a:hover {
   align-items: center;
   gap: 12px;
   justify-content: space-between;
-}
-.toolbar .toolbar-left,
-.toolbar .toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 .select {
   appearance: none;
@@ -253,8 +227,6 @@ nav a:hover {
   color: var(--muted);
   font-size: 0.92rem;
 }
-
-/* Grid + cards */
 .medicine-grid {
   max-width: 1100px;
   margin: 0 auto;
@@ -286,7 +258,7 @@ nav a:hover {
 }
 .medicine-card .img-wrap {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4/3;
   background: var(--surface-2);
   display: grid;
   place-items: center;
@@ -298,13 +270,6 @@ nav a:hover {
   height: 100%;
   object-fit: contain;
   object-position: center;
-}
-.medicine-card > img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: contain;
-  object-position: center;
-  background: var(--surface-2);
 }
 .medicine-card .badge {
   margin: 10px auto 0;
@@ -328,7 +293,6 @@ nav a:hover {
   margin: 0 12px 8px;
   text-align: center;
 }
-/* uniform text heights */
 .medicine-card h3,
 .medicine-card h3 a {
   line-height: 1.25;
@@ -346,8 +310,6 @@ nav a:hover {
   overflow: hidden;
   min-height: calc(2 * 1.5em);
 }
-
-/* Card actions */
 .card-actions {
   display: flex;
   gap: 8px;
@@ -370,8 +332,6 @@ nav a:hover {
 .btn:hover {
   filter: brightness(0.97);
 }
-
-/* Details layout */
 #medicine-details {
   display: grid;
   grid-template-columns: 1fr 440px;
@@ -387,9 +347,9 @@ nav a:hover {
 }
 #medicine-details > img {
   grid-column: 2;
-  grid-row: 1 / -1;
+  grid-row: 1/-1;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4/3;
   object-fit: contain;
   object-position: center;
   background: var(--surface-2);
@@ -410,55 +370,6 @@ nav a:hover {
     order: 2;
   }
 }
-
-/* Skeletons */
-.skeleton {
-  position: relative;
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.skeleton::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.6),
-    transparent
-  );
-  animation: shimmer 1.2s infinite;
-}
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-.skeleton-card {
-  border-radius: var(--card-radius);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-.skeleton-card .img {
-  height: clamp(160px, 28vw, 220px);
-}
-.skeleton-card .line {
-  height: 12px;
-  margin: 10px 16px;
-  border-radius: 6px;
-  background: var(--surface-2);
-}
-.skeleton-card .line.wide {
-  width: 80%;
-}
-.skeleton-card .line.narrow {
-  width: 60%;
-}
-
-/* Footer */
 footer {
   background: var(--surface);
   border-top: 1px solid var(--border);
@@ -467,8 +378,6 @@ footer {
   padding: 16px;
   margin-top: auto;
 }
-
-/* Cart drawer */
 .cart-drawer {
   position: fixed;
   inset: 0;
@@ -565,8 +474,6 @@ footer {
   justify-content: space-between;
   font-weight: 700;
 }
-
-/* Modal */
 .modal {
   position: fixed;
   inset: 0;
@@ -623,16 +530,6 @@ footer {
   gap: 10px;
   padding-top: 6px;
 }
-
-/* Responsive grid breakpoints */
-@media (max-width: 599px) {
-  .medicine-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-}
-
-/* Mobile nav */
 @media (max-width: 768px) {
   nav {
     display: none;
