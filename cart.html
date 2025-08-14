@@ -94,12 +94,17 @@
           >
             <label>Full name<input name="name" type="text" required /></label>
             <label
-              >Phone number<input
+              >Phone number
+              <input
                 name="phone"
                 type="tel"
+                inputmode="numeric"
+                maxlength="11"
+                placeholder="e.g. 03XXXXXXXXX"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)"
                 required
-                pattern="[0-9+\-() ]{7,}"
-            /></label>
+              />
+            </label>
             <label
               >Address<textarea name="location" rows="2" required></textarea>
             </label>
