@@ -9,6 +9,16 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <style>
+      @media (max-width: 900px) {
+        .orders-layout {
+          grid-template-columns: 1fr !important;
+        }
+        #order-items {
+          position: static !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -44,14 +54,7 @@
       <form
         id="owner-key-form"
         class="modal-body"
-        style="
-          max-width: 760px;
-          margin: 0 0 12px 0;
-          display: grid;
-          grid-template-columns: 1fr auto;
-          gap: 8px;
-          align-items: end;
-        "
+        style="max-width: 520px; margin: 0 0 12px 0"
       >
         <label
           >Owner access key<input
@@ -60,26 +63,10 @@
             placeholder="Enter access key"
             required
         /></label>
-        <div class="modal-actions" style="justify-content: flex-start">
+        <div class="modal-actions">
           <button type="submit" class="btn primary">Unlock</button>
         </div>
       </form>
-
-      <div
-        style="
-          display: flex;
-          gap: 10px;
-          align-items: center;
-          margin: 8px 0 12px;
-        "
-      >
-        <label>Date <input id="orders-date" type="date" /></label>
-        <button id="orders-date-apply" class="btn">Show</button>
-        <button id="orders-date-clear" class="btn">Clear</button>
-        <span style="color: var(--muted)"
-          >New orders auto-refresh every 20s</span
-        >
-      </div>
 
       <section id="orders-empty" style="display: none; color: var(--muted)">
         No orders yet.
@@ -89,94 +76,91 @@
       </section>
       <section id="orders-list" style="display: none">
         <div
+          class="orders-layout"
           style="
-            overflow-x: auto;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--surface);
+            display: grid;
+            grid-template-columns: 1fr minmax(280px, 360px);
+            gap: 16px;
+            align-items: start;
           "
         >
-          <table style="width: 100%; border-collapse: collapse">
-            <thead style="background: var(--surface-2)">
-              <tr>
-                <th
-                  style="
-                    text-align: left;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Date
-                </th>
-                <th
-                  style="
-                    text-align: left;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Time
-                </th>
-                <th
-                  style="
-                    text-align: left;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Order ID
-                </th>
-                <th
-                  style="
-                    text-align: left;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Customer
-                </th>
-                <th
-                  style="
-                    text-align: left;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Address
-                </th>
-                <th
-                  style="
-                    text-align: left;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Phone
-                </th>
-                <th
-                  style="
-                    text-align: right;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Total
-                </th>
-                <th
-                  style="
-                    text-align: center;
-                    padding: 10px;
-                    border-bottom: 1px solid var(--border);
-                  "
-                >
-                  Done
-                </th>
-              </tr>
-            </thead>
-            <tbody id="orders-tbody"></tbody>
-          </table>
+          <div
+            class="orders-table-wrap"
+            style="
+              overflow-x: auto;
+              border: 1px solid var(--border);
+              border-radius: 10px;
+              background: var(--surface);
+            "
+          >
+            <table style="width: 100%; border-collapse: collapse">
+              <thead style="background: var(--surface-2)">
+                <tr>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px;
+                      border-bottom: 1px solid var(--border);
+                    "
+                  >
+                    Created
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px;
+                      border-bottom: 1px solid var(--border);
+                    "
+                  >
+                    Order ID
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px;
+                      border-bottom: 1px solid var(--border);
+                    "
+                  >
+                    Customer
+                  </th>
+                  <th
+                    style="
+                      text-align: left;
+                      padding: 10px;
+                      border-bottom: 1px solid var(--border);
+                    "
+                  >
+                    Phone
+                  </th>
+                  <th
+                    style="
+                      text-align: right;
+                      padding: 10px;
+                      border-bottom: 1px solid var(--border);
+                    "
+                  >
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+          <aside
+            id="order-items"
+            style="
+              position: sticky;
+              top: 12px;
+              border: 1px solid var(--border);
+              border-radius: 10px;
+              background: var(--surface);
+              min-height: 120px;
+              padding: 10px;
+            "
+          >
+            <div style="color: var(--muted)">Select an order to view items</div>
+          </aside>
         </div>
-        <div id="order-items" style="margin-top: 12px"></div>
       </section>
     </main>
 
