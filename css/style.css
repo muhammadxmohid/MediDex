@@ -69,7 +69,7 @@ header {
   padding: 14px 0;
 }
 .nav-container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px;
   display: flex;
@@ -228,12 +228,12 @@ nav a:hover {
   font-size: 0.92rem;
 }
 .medicine-grid {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 }
 .medicine-grid.single {
   grid-template-columns: repeat(auto-fit, minmax(260px, 360px));
@@ -284,13 +284,13 @@ nav a:hover {
 .medicine-card h3 {
   font-size: 1.06rem;
   font-weight: 600;
-  margin: 10px 12px 2px;
+  margin: 8px 10px 2px;
   text-align: center;
 }
 .medicine-card p {
   font-size: 0.92rem;
   color: var(--muted);
-  margin: 0 12px 8px;
+  margin: 0 10px 8px;
   text-align: center;
 }
 .medicine-card h3,
@@ -340,9 +340,9 @@ nav a:hover {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--card-radius);
-  padding: 16px;
+  padding: 20px;
   box-shadow: var(--shadow);
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 16px auto;
 }
 #medicine-details > img {
@@ -359,6 +359,13 @@ nav a:hover {
 }
 #medicine-details > *:not(img) {
   grid-column: 1;
+}
+#medicine-details h1 {
+  margin: 4px 0 6px;
+}
+#medicine-details p {
+  margin-bottom: 8px;
+  color: var(--muted);
 }
 @media (max-width: 900px) {
   #medicine-details {
@@ -548,5 +555,72 @@ footer {
   }
   .hamburger {
     display: flex;
+  }
+}
+@media (max-width: 520px) {
+  .medicine-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    padding: 12px;
+  }
+  .medicine-card .img-wrap {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+/* Cart page responsive layout */
+.cart-page-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .cart-page-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Sticky bottom action bar (details mobile) */
+.has-mobile-bar {
+  overflow-x: hidden;
+  padding-bottom: 64px; /* space for bar */
+}
+#mobile-action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.08);
+  padding: 10px 12px;
+  display: none;
+  z-index: 1600;
+}
+#mobile-action-bar[aria-hidden="false"] {
+  display: block;
+}
+#mobile-action-bar .bar-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+@media (min-width: 901px) {
+  #mobile-action-bar {
+    display: none !important;
   }
 }

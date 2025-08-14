@@ -103,7 +103,7 @@
               name="phone"
               type="tel"
               required
-              pattern="[0-9+\\-() ]{7,}"
+              pattern="[0-9+\-() ]{7,}"
           /></label>
           <label
             >Location<textarea name="location" rows="2" required></textarea>
@@ -150,9 +150,6 @@
                 <button class="btn add-to-cart" data-id="${
                   med.id
                 }">Add to cart</button>
-                <button class="btn primary buy-now" data-id="${
-                  med.id
-                }">Buy now</button>
               </div>`;
             card.addEventListener(
               "click",

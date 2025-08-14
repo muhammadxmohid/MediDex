@@ -1,10 +1,20 @@
-// ===== Config: API base for checkout (Production uses Railway URL) =====
+// ===== API base =====
 const API_BASE =
   location.hostname === "localhost" || location.hostname === "127.0.0.1"
     ? "http://localhost:3001"
     : "https://medidex-production.up.railway.app";
 
-// ===== Sample Medicines Data =====
+// First-visit: clear any previous cart on this device
+(function ensureFirstVisitCartClear() {
+  try {
+    if (!localStorage.getItem("medidex_firstSeenAt")) {
+      localStorage.removeItem("medidexCart");
+      localStorage.setItem("medidex_firstSeenAt", String(Date.now()));
+    }
+  } catch {}
+})();
+
+// ===== Sample data (unchanged) =====
 const medicines = [
   {
     id: 1,
@@ -155,14 +165,45 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ===== Filters + render =====
+// ===== Helpers =====
 function uniqueCategories(items) {
   return Array.from(new Set(items.map((m) => m.category))).sort();
 }
 function setGridSingleClass(grid, count) {
   grid.classList.toggle("single", count === 1);
 }
+function money(n) {
+  return `$${Number(n || 0).toFixed(2)}`;
+}
 
+// ===== Reveal on scroll (animations) =====
+let revealObserver;
+function setupRevealObserver() {
+  if (revealObserver) revealObserver.disconnect();
+  revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add("is-visible");
+      });
+    },
+    { threshold: 0.1 }
+  );
+  document
+    .querySelectorAll(".reveal")
+    .forEach((el) => revealObserver.observe(el));
+}
+function markRevealsNow() {
+  document.querySelectorAll(".reveal").forEach((el) => {
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.9)
+      el.classList.add("is-visible");
+  });
+}
+function addReveal(el) {
+  if (!el.classList.contains("reveal")) el.classList.add("reveal");
+  if (revealObserver) revealObserver.observe(el);
+}
+
+// ===== Render medicines =====
 function renderMedicines(meds) {
   const grid = document.querySelector(".medicine-grid");
   const countEl = document.getElementById("results-count");
@@ -175,11 +216,15 @@ function renderMedicines(meds) {
   setGridSingleClass(grid, meds.length);
   if (meds.length === 0) {
     grid.innerHTML = `<p style="text-align:center; grid-column:1/-1; font-weight:600;">No medicines found.</p>`;
+    setupRevealObserver();
+    markRevealsNow();
     return;
   }
   meds.forEach((med) => {
     const card = document.createElement("div");
     card.classList.add("medicine-card");
+    addReveal(card);
+    card.setAttribute("data-id", String(med.id));
     card.innerHTML = `
       <div class="img-wrap"><img src="${med.image}" alt="${
       med.name
@@ -190,7 +235,6 @@ function renderMedicines(meds) {
       <p>${med.description.substring(0, 80)}...</p>
       <div class="card-actions">
         <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
-        <button class="btn primary buy-now" data-id="${med.id}">Buy now</button>
       </div>`;
     card.addEventListener(
       "click",
@@ -203,7 +247,11 @@ function renderMedicines(meds) {
       );
     grid.appendChild(card);
   });
+  setupRevealObserver();
+  markRevealsNow();
 }
+
+// ===== Filters =====
 function applyFilters() {
   const searchInput = document.querySelector(".search-bar input");
   const query = (
@@ -280,21 +328,14 @@ function setQty(id, qty) {
   renderCart?.();
 }
 
-// Drawer rendering (if present)
-function money(n) {
-  return `$${n.toFixed(2)}`;
-}
+// Drawer rendering
 function openCart() {
   const d = document.getElementById("cart-drawer");
-  if (d) {
-    d.setAttribute("aria-hidden", "false");
-  }
+  if (d) d.setAttribute("aria-hidden", "false");
 }
 function closeCart() {
   const d = document.getElementById("cart-drawer");
-  if (d) {
-    d.setAttribute("aria-hidden", "true");
-  }
+  if (d) d.setAttribute("aria-hidden", "true");
 }
 function renderCart() {
   const list = document.getElementById("cart-items");
@@ -306,6 +347,7 @@ function renderCart() {
     if (!med) return;
     const row = document.createElement("div");
     row.className = "cart-item";
+    addReveal(row);
     row.innerHTML = `
       <img src="${med.image}" alt="${med.name}">
       <div>
@@ -326,25 +368,35 @@ function renderCart() {
     list.appendChild(row);
   });
   totalEl.textContent = money(cartTotal());
-}
-function buyNow(id) {
-  addToCart(id, 1);
-  openCheckout();
+  setupRevealObserver();
+  markRevealsNow();
 }
 
-// Checkout (if modal present)
+// Checkout modal
 function openCheckout() {
   const m = document.getElementById("checkout-modal");
-  if (m) {
-    m.setAttribute("aria-hidden", "false");
-  }
+  if (m) m.setAttribute("aria-hidden", "false");
 }
 function closeCheckout() {
   const m = document.getElementById("checkout-modal");
-  if (m) {
-    m.setAttribute("aria-hidden", "true");
-  }
+  if (m) m.setAttribute("aria-hidden", "true");
 }
+
+// Create order
+async function apiCreateOrder(payload) {
+  const resp = await fetch(`${API_BASE}/api/orders`, {
+    method: "POST",
+    mode: "cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(`API ${resp.status}: ${text || "Unknown error"}`);
+  }
+  return resp.json();
+}
+
 function setupCartUI() {
   const btn = document.getElementById("cart-button");
   if (btn) btn.onclick = openCart;
@@ -369,96 +421,83 @@ function setupCartUI() {
     form.onsubmit = async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
-      const enrichedItems = cart.items.map((it) => {
-        const med = findMed(it.id);
+      const customer = {
+        name: String(data.name || "").trim(),
+        phone: String(data.phone || "").trim(),
+        location: String(data.location || "").trim(),
+        doctorRecommended: data.doctorRecommended || "no",
+      };
+      if (!customer.name || !customer.phone || !customer.location) {
+        alert("Please fill name, phone and location.");
+        return;
+      }
+      if (cart.items.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+      const items = cart.items.map((it) => {
+        const med = findMed(it.id) || {};
         return {
           id: it.id,
-          name: med?.name || `Medicine #${it.id}`,
-          price: Number(med?.price || 0),
-          qty: it.qty,
+          name: med.name || "",
+          price: Number(med.price || 0),
+          qty: Number(it.qty || 1),
         };
       });
+      const payload = { customer, items };
 
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const original = submitBtn ? submitBtn.textContent : "";
+      if (submitBtn) submitBtn.textContent = "Processing...";
       try {
-        const resp = await fetch(`${API_BASE}/api/orders`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer: {
-              name: data.name,
-              phone: data.phone,
-              location: data.location,
-              doctorRecommended: data.doctorRecommended || "no",
-            },
-            items: enrichedItems,
-          }),
-        });
-        let errorText = "";
-        if (!resp.ok) {
-          try {
-            const j = await resp.json();
-            errorText = j?.error || JSON.stringify(j);
-          } catch {
-            errorText = await resp.text();
-          }
-          throw new Error(errorText || `HTTP ${resp.status}`);
-        }
-        const { order } = await resp.json();
-        alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
+        const { order } = await apiCreateOrder(payload);
         cart.items = [];
         saveCart();
         updateCartBadge();
         renderCart?.();
+        if (submitBtn) submitBtn.textContent = original;
+        alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
         closeCheckout?.();
         closeCart?.();
         window.location.href = "cart.html";
       } catch (err) {
-        alert(`Checkout failed: ${err?.message || "Unknown error"}`);
-        console.error("Checkout error:", err);
+        if (submitBtn) submitBtn.textContent = original;
+        console.error("Checkout failed:", err);
+        alert(`Checkout failed: ${err.message}`);
       }
     };
   }
 }
 
-// Delegated cart buttons (all pages)
+// Delegated buttons (no Buy Now)
 document.addEventListener("click", (e) => {
   const addBtn = e.target.closest(".add-to-cart");
   if (addBtn) {
     e.preventDefault();
     e.stopPropagation();
     const id = Number(addBtn.dataset.id);
-    if (id) addToCart(id, 1);
-    return;
-  }
-  const buyBtn = e.target.closest(".buy-now");
-  if (buyBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = Number(buyBtn.dataset.id);
-    if (id) buyNow(id);
+    if (id) {
+      addToCart(id, 1);
+    }
     return;
   }
 });
 
-// Medicines page
+// Page initializers
 function onMedicinesPageLoad() {
   if (!document.querySelector(".medicine-grid")) return;
   setupFilters();
   const q = localStorage.getItem("medidexSearchQuery") || "";
   localStorage.removeItem("medidexSearchQuery");
   const input = document.querySelector(".search-bar input");
-  if (input && q) {
-    input.value = q;
-  }
+  if (input && q) input.value = q;
   applyFilters();
 }
 
-// Cart page
 function onCartPageLoad() {
   const host = document.getElementById("cart-page-items");
   const totalEl = document.getElementById("cart-page-total");
   if (!host || !totalEl) return;
-
   function renderCartPage() {
     host.innerHTML = "";
     cart.items.forEach((it) => {
@@ -466,6 +505,7 @@ function onCartPageLoad() {
       if (!med) return;
       const row = document.createElement("div");
       row.className = "cart-item";
+      addReveal(row);
       row.innerHTML = `
         <img src="${med.image}" alt="${med.name}">
         <div>
@@ -497,8 +537,9 @@ function onCartPageLoad() {
     });
     totalEl.textContent = `$${cartTotal().toFixed(2)}`;
     updateCartBadge();
+    setupRevealObserver();
+    markRevealsNow();
   }
-
   renderCartPage();
 
   const form = document.getElementById("cart-checkout-form");
@@ -506,7 +547,7 @@ function onCartPageLoad() {
     form.onsubmit = async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
-      const enrichedItems = cart.items.map((it) => {
+      const items = cart.items.map((it) => {
         const med = findMed(it.id);
         return {
           id: it.id,
@@ -515,10 +556,10 @@ function onCartPageLoad() {
           qty: it.qty,
         };
       });
-
       try {
         const resp = await fetch(`${API_BASE}/api/orders`, {
           method: "POST",
+          mode: "cors",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             customer: {
@@ -527,18 +568,12 @@ function onCartPageLoad() {
               location: data.location,
               doctorRecommended: data.doctorRecommended || "no",
             },
-            items: enrichedItems,
+            items,
           }),
         });
-        let errorText = "";
         if (!resp.ok) {
-          try {
-            const j = await resp.json();
-            errorText = j?.error || JSON.stringify(j);
-          } catch {
-            errorText = await resp.text();
-          }
-          throw new Error(errorText || `HTTP ${resp.status}`);
+          const t = await resp.text().catch(() => "");
+          throw new Error(t || `HTTP ${resp.status}`);
         }
         const { order } = await resp.json();
         alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
@@ -554,13 +589,38 @@ function onCartPageLoad() {
   }
 }
 
+// Mobile bottom action bar for details page
+function setupDetailsMobileBar(medId) {
+  const bar = document.getElementById("mobile-action-bar");
+  const btn = document.getElementById("mobile-add-btn");
+  if (!bar || !btn) return;
+  btn.dataset.id = String(medId);
+  function refreshBar() {
+    if (window.innerWidth <= 900) {
+      document.body.classList.add("has-mobile-bar");
+      bar.setAttribute("aria-hidden", "false");
+    } else {
+      document.body.classList.remove("has-mobile-bar");
+      bar.setAttribute("aria-hidden", "true");
+    }
+  }
+  refreshBar();
+  window.addEventListener("resize", refreshBar);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadCart();
   setupCartUI();
   onMedicinesPageLoad();
+  // featured cards animate
+  setTimeout(() => {
+    document.querySelectorAll(".medicine-card").forEach(addReveal);
+    setupRevealObserver();
+    markRevealsNow();
+  }, 200);
 });
 
-// Suggestions (minimal)
+// Suggestions
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.querySelector(".search-bar input");
   const box = document.querySelector(".search-bar .suggestions");
