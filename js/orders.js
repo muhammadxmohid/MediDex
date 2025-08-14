@@ -10,11 +10,15 @@
   const ordersError = document.getElementById("orders-error");
   const tbody = document.getElementById("orders-tbody");
   const itemsHost = document.getElementById("order-items");
+  const dateInput = document.getElementById("orders-date");
+  const applyBtn = document.getElementById("orders-date-apply");
+  const clearBtn = document.getElementById("orders-date-clear");
 
   function fmtDateParts(iso) {
     try {
       const d = new Date(iso);
       return {
+        ymd: d.toISOString().slice(0, 10),
         date: d.toLocaleDateString(undefined, {
           year: "numeric",
           month: "short",
@@ -26,7 +30,7 @@
         }),
       };
     } catch {
-      return { date: iso, time: "" };
+      return { ymd: "", date: iso, time: "" };
     }
   }
   function money(n) {
@@ -44,10 +48,31 @@
     return resp.json();
   }
 
-  function renderOrders(data) {
+  function loadDoneMap() {
+    try {
+      return JSON.parse(localStorage.getItem("medidex_done_orders") || "{}");
+    } catch {
+      return {};
+    }
+  }
+  function saveDoneMap(map) {
+    localStorage.setItem("medidex_done_orders", JSON.stringify(map));
+  }
+
+  let allOrders = [];
+  let lastSeenIds = new Set();
+
+  function filterByDate(list) {
+    const val = dateInput?.value || "";
+    if (!val) return list;
+    return list.filter((o) => fmtDateParts(o.createdAt).ymd === val);
+  }
+
+  function renderOrders() {
+    const doneMap = loadDoneMap();
+    const list = filterByDate(allOrders);
     tbody.innerHTML = "";
     itemsHost.innerHTML = "";
-    const list = data?.orders || [];
     if (list.length === 0) {
       ordersEmpty.style.display = "block";
       ordersList.style.display = "none";
@@ -55,6 +80,7 @@
     }
     ordersEmpty.style.display = "none";
     ordersList.style.display = "block";
+
     list.forEach((o) => {
       const { date, time } = fmtDateParts(o.createdAt);
       const tr = document.createElement("tr");
@@ -68,13 +94,22 @@
           o.name
         }</td>
         <td style="padding:10px; border-bottom:1px solid var(--border);">${
+          o.location
+        }</td>
+        <td style="padding:10px; border-bottom:1px solid var(--border);">${
           o.phone
         }</td>
         <td style="padding:10px; text-align:right; border-bottom:1px solid var(--border);">${money(
           o.total
         )}</td>
+        <td style="padding:10px; text-align:center; border-bottom:1px solid var(--border);">
+          <input type="checkbox" class="order-done" data-id="${o.id}" ${
+        doneMap[o.id] ? "checked" : ""
+      } />
+        </td>
       `;
-      tr.addEventListener("click", () => {
+      tr.addEventListener("click", (e) => {
+        if (e.target.closest(".order-done")) return;
         if (!o.items || !o.items.length) {
           itemsHost.innerHTML = '<div class="cart-item-meta">No items</div>';
           return;
@@ -99,37 +134,92 @@
             </div>
           </div>`;
       });
+      const cb = tr.querySelector(".order-done");
+      cb.addEventListener("change", () => {
+        const map = loadDoneMap();
+        if (cb.checked) map[o.id] = true;
+        else delete map[o.id];
+        saveDoneMap(map);
+      });
       tbody.appendChild(tr);
     });
+  }
+
+  function showPopup(msg) {
+    let host = document.getElementById("toast");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "toast";
+      document.body.appendChild(host);
+    }
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = msg;
+    host.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transition = "opacity .2s";
+    }, 700);
+    setTimeout(() => {
+      el.remove();
+    }, 900);
+  }
+
+  async function refreshOrders() {
+    const key = sessionStorage.getItem("ownerKey") || "";
+    if (!key) return;
+    try {
+      const data = await fetchOrders(key);
+      const incoming = data?.orders || [];
+      // Detect new orders
+      const incomingIds = new Set(incoming.map((o) => o.id));
+      const newOnes = incoming.filter((o) => !lastSeenIds.has(o.id));
+      allOrders = incoming;
+      lastSeenIds = incomingIds;
+      renderOrders();
+      if (newOnes.length > 0) {
+        showPopup(
+          `${newOnes.length} new order${newOnes.length > 1 ? "s" : ""}`
+        );
+      }
+    } catch (err) {
+      ordersError.textContent = `Error loading orders: ${err.message}`;
+      ordersError.style.display = "block";
+    }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     const saved = localStorage.getItem("medidexTheme");
     if (saved === "dark") document.body.classList.add("dark");
 
-    const savedKey = sessionStorage.getItem("ownerKey") || "";
-    if (savedKey) {
-      fetchOrders(savedKey)
-        .then(renderOrders)
-        .catch((err) => {
-          ordersError.textContent = `Error loading orders: ${err.message}`;
-          ordersError.style.display = "block";
-        });
-    }
     if (keyForm) {
       keyForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         ordersError.style.display = "none";
         const key = new FormData(keyForm).get("key");
         try {
-          const data = await fetchOrders(key);
           sessionStorage.setItem("ownerKey", key);
-          renderOrders(data);
+          await refreshOrders();
+          setInterval(refreshOrders, 20000);
         } catch (err) {
           ordersError.textContent = `Error loading orders: ${err.message}`;
           ordersError.style.display = "block";
         }
       });
+    }
+
+    if (applyBtn) applyBtn.addEventListener("click", () => renderOrders());
+    if (clearBtn)
+      clearBtn.addEventListener("click", () => {
+        dateInput.value = "";
+        renderOrders();
+      });
+
+    // Auto-use saved key if present
+    const savedKey = sessionStorage.getItem("ownerKey") || "";
+    if (savedKey) {
+      refreshOrders();
+      setInterval(refreshOrders, 20000);
     }
   });
 })();
