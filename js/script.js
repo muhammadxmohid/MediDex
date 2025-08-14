@@ -119,7 +119,6 @@ let toastHost;
 function ensureToast() {
   if (!toastHost) {
     toastHost = document.createElement("div");
-    toastHost.id = "toast";
     Object.assign(toastHost.style, {
       position: "fixed",
       left: "50%",
@@ -135,7 +134,6 @@ function ensureToast() {
 function showToast(text) {
   ensureToast();
   const el = document.createElement("div");
-  el.textContent = text;
   const cs = getComputedStyle(document.body);
   Object.assign(el.style, {
     background: cs.getPropertyValue("--surface") || "#fff",
@@ -148,6 +146,7 @@ function showToast(text) {
     transform: "translateY(8px)",
     transition: "opacity .2s, transform .2s",
   });
+  el.textContent = text;
   toastHost.appendChild(el);
   requestAnimationFrame(() => {
     el.style.opacity = "1";
@@ -189,21 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// ===== Search submit =====
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector(".search-bar");
-  const input = document.querySelector(".search-bar input");
-  if (!form) return;
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const q = input.value.trim();
-    localStorage.setItem("medidexSearchQuery", q);
-    if (!location.pathname.endsWith("/medicines.html"))
-      window.location.href = "medicines.html";
-    else renderFromFilters();
-  });
-});
-
 // ===== Helpers =====
 function uniqueCategories(items) {
   return Array.from(new Set(items.map((m) => m.category))).sort();
@@ -215,7 +199,7 @@ function money(n) {
   return `$${Number(n || 0).toFixed(2)}`;
 }
 
-// ===== Renderers =====
+// ===== Grid rendering (index/medicines pages) =====
 function renderCards(list) {
   const grid = document.querySelector(".medicine-grid");
   const countEl = document.getElementById("results-count");
@@ -284,6 +268,66 @@ function setupCategoryFilter() {
   sel.dataset.ready = "1";
 }
 
+// ===== Details page rendering =====
+function setupStickyBar(medId) {
+  const bar = document.getElementById("mobile-action-bar");
+  const addBtn = document.getElementById("mobile-add-btn");
+  const goBtn = document.getElementById("mobile-go-btn");
+  if (!bar || !addBtn || !goBtn) return;
+  addBtn.dataset.id = String(medId);
+  addBtn.onclick = (e) => {
+    e.preventDefault();
+    addToCart(medId, 1);
+  };
+  goBtn.onclick = (e) => {
+    e.preventDefault();
+    window.location.href = "cart.html";
+  };
+
+  function refreshBar() {
+    if (window.innerWidth <= 900) {
+      document.body.classList.add("has-mobile-bar");
+      bar.setAttribute("aria-hidden", "false");
+    } else {
+      document.body.classList.remove("has-mobile-bar");
+      bar.setAttribute("aria-hidden", "true");
+    }
+  }
+  refreshBar();
+  window.addEventListener("resize", refreshBar);
+}
+
+function renderDetailsPage() {
+  const container = document.getElementById("medicine-details");
+  if (!container) return;
+  const params = new URLSearchParams(window.location.search);
+  const id = Number(params.get("id"));
+  const med = medicines.find((m) => m.id === id);
+  if (!med) {
+    container.innerHTML = "<p>Medicine not found.</p>";
+    return;
+  }
+
+  container.innerHTML = `
+    <h1>${med.name}</h1>
+    <p class="badge" style="justify-self:start;">${med.category}</p>
+    <p>${med.description}</p>
+    <div class="card-actions" style="justify-content:flex-start;">
+      <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
+      <a class="btn" href="cart.html">Go to cart</a>
+    </div>
+    <img src="${med.image}" alt="${med.name}" />`;
+
+  const addBtn = container.querySelector(".add-to-cart");
+  if (addBtn)
+    addBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      addToCart(med.id, 1);
+    });
+
+  setupStickyBar(med.id);
+}
+
 // ===== Cart =====
 const cart = { items: [] };
 function saveCart() {
@@ -319,15 +363,20 @@ function addToCart(id, qty = 1) {
   showToast("Added to cart");
 }
 
-// ===== Init (force render so pages aren’t blank) =====
+// ===== Init =====
 document.addEventListener("DOMContentLoaded", () => {
   ensureToast();
   loadCart();
   setupCategoryFilter();
-  // Always render the grid if present
+
+  // If a grid exists, render it (index/medicines)
   if (document.querySelector(".medicine-grid")) {
     renderFromFilters();
-    // If filters not present for some reason, render all
     if (!document.getElementById("filter-category")) renderCards(medicines);
+  }
+
+  // If details container exists, render the details page
+  if (document.getElementById("medicine-details")) {
+    renderDetailsPage();
   }
 });
