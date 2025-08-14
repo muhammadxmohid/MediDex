@@ -260,15 +260,18 @@ function renderMedicines(meds) {
       <div class="card-actions">
         <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
       </div>`;
+    // Make card navigable but allow the button to work
     card.addEventListener(
       "click",
       () => (window.location.href = `medicine-details.html?id=${med.id}`)
     );
-    card
-      .querySelectorAll(".btn")
-      .forEach((btn) =>
-        btn.addEventListener("click", (e) => e.stopPropagation())
-      );
+    const btn = card.querySelector(".add-to-cart");
+    if (btn)
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToCart(med.id, 1);
+      });
     grid.appendChild(card);
   });
   setupRevealObserver();
@@ -344,6 +347,14 @@ function removeFromCart(id) {
   updateCartBadge();
   renderCart?.();
 }
+function setQty(id, qty) {
+  const it = cart.items.find((i) => i.id === id);
+  if (!it) return;
+  it.qty = Math.max(1, qty);
+  saveCart();
+  updateCartBadge();
+  renderCart?.();
+}
 
 // Drawer rendering
 function openCart() {
@@ -398,8 +409,6 @@ function closeCheckout() {
   const m = document.getElementById("checkout-modal");
   if (m) m.setAttribute("aria-hidden", "true");
 }
-
-// Create order
 async function apiCreateOrder(payload) {
   const resp = await fetch(`${API_BASE}/api/orders`, {
     method: "POST",
@@ -412,15 +421,6 @@ async function apiCreateOrder(payload) {
     throw new Error(`API ${resp.status}: ${text || "Unknown error"}`);
   }
   return resp.json();
-}
-
-function setQty(id, qty) {
-  const it = cart.items.find((i) => i.id === id);
-  if (!it) return;
-  it.qty = Math.max(1, qty);
-  saveCart();
-  updateCartBadge();
-  renderCart?.();
 }
 function setupCartUI() {
   const btn = document.getElementById("cart-button");
@@ -518,7 +518,6 @@ function onMedicinesPageLoad() {
   if (input && q) input.value = q;
   applyFilters();
 }
-
 function onCartPageLoad() {
   const host = document.getElementById("cart-page-items");
   const totalEl = document.getElementById("cart-page-total");
@@ -566,52 +565,6 @@ function onCartPageLoad() {
     markRevealsNow();
   }
   renderCartPage();
-
-  const form = document.getElementById("cart-checkout-form");
-  if (form) {
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      const items = cart.items.map((it) => {
-        const med = findMed(it.id);
-        return {
-          id: it.id,
-          name: med?.name || `Medicine #${it.id}`,
-          price: Number(med?.price || 0),
-          qty: it.qty,
-        };
-      });
-      try {
-        const resp = await fetch(`${API_BASE}/api/orders`, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer: {
-              name: data.name,
-              phone: data.phone,
-              location: data.location,
-              doctorRecommended: data.doctorRecommended || "no",
-            },
-            items,
-          }),
-        });
-        if (!resp.ok) {
-          const t = await resp.text().catch(() => "");
-          throw new Error(t || `HTTP ${resp.status}`);
-        }
-        const { order } = await resp.json();
-        alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
-        cart.items = [];
-        saveCart();
-        renderCartPage();
-        window.location.href = "index.html";
-      } catch (err) {
-        alert(`Checkout failed: ${err?.message || "Unknown error"}`);
-        console.error("Checkout error:", err);
-      }
-    };
-  }
 }
 
 // Mobile bottom action bar for details page
@@ -619,7 +572,7 @@ function setupDetailsMobileBar(medId) {
   const bar = document.getElementById("mobile-action-bar");
   const btn = document.getElementById("mobile-add-btn");
   if (!bar || !btn) return;
-  btn.classList.add("add-to-cart"); // ensure delegated handler picks it up
+  btn.classList.add("add-to-cart");
   btn.dataset.id = String(medId);
   function refreshBar() {
     if (window.innerWidth <= 900) {
