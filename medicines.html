@@ -37,6 +37,10 @@
         >
           🌙
         </button>
+        <a href="cart.html" class="cart-button" aria-label="Open cart"
+          ><i class="fas fa-shopping-cart"></i
+          ><span id="cart-count" class="cart-count">0</span></a
+        >
       </div>
       <form class="search-bar" role="search" autocomplete="off">
         <input
@@ -49,7 +53,7 @@
           <i class="fas fa-search"></i>
         </button>
       </form>
-      <div class="toolbar" role="region" aria-label="Filters and sorting">
+      <div class="toolbar" role="region" aria-label="Filters">
         <div class="toolbar-left">
           <label
             ><span class="sr-only">Filter by category</span>
@@ -73,63 +77,12 @@
         <div
           class="medicine-grid"
           aria-live="polite"
-          aria-label="List of medicines"
+          aria-label="All medicines"
         ></div>
       </section>
     </main>
 
     <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
-
-    <!-- Cart Drawer and Checkout Modal -->
-    <div id="cart-drawer" class="cart-drawer" aria-hidden="true">
-      <div class="cart-drawer-inner">
-        <div class="cart-drawer-header">
-          <h3>Cart</h3>
-          <button id="cart-close" class="icon-btn" aria-label="Close cart">
-            ✕
-          </button>
-        </div>
-        <div id="cart-items" class="cart-items"></div>
-        <div class="cart-drawer-footer">
-          <div class="cart-total">
-            <span>Total</span><span id="cart-total">$0.00</span>
-          </div>
-          <button id="checkout-button" class="btn primary">Checkout</button>
-        </div>
-      </div>
-      <div class="cart-drawer-backdrop"></div>
-    </div>
-
-    <div id="checkout-modal" class="modal" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3>Checkout</h3>
-          <button id="checkout-close" class="icon-btn" aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <form id="checkout-form" class="modal-body">
-          <label>Full name<input name="name" type="text" required /></label>
-          <label
-            >Phone number<input
-              name="phone"
-              type="tel"
-              required
-              pattern="[0-9+\-() ]{7,}"
-          /></label>
-          <label
-            >Location<textarea name="location" rows="2" required></textarea>
-          </label>
-          <div class="modal-actions">
-            <button type="button" class="btn" id="checkout-cancel">
-              Cancel</button
-            ><button type="submit" class="btn primary">Place order</button>
-          </div>
-        </form>
-      </div>
-      <div class="modal-backdrop"></div>
-    </div>
-
     <script src="js/script.js"></script>
   </body>
 </html>
