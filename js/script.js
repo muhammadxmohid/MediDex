@@ -4,7 +4,7 @@ const API_BASE =
     ? "http://localhost:3001"
     : "https://medidex-production.up.railway.app";
 
-// First-visit: clear any previous cart on this device
+// First-visit: clear cart on this device
 (function ensureFirstVisitCartClear() {
   try {
     if (!localStorage.getItem("medidex_firstSeenAt")) {
@@ -194,13 +194,13 @@ function showToast(text) {
   setTimeout(() => {
     el.style.opacity = "0";
     el.style.transition = "opacity .2s";
-  }, 1600);
+  }, 700);
   setTimeout(() => {
     el.remove();
-  }, 1900);
+  }, 900);
 }
 
-// ===== Reveal on scroll (animations) =====
+// ===== Reveal on scroll =====
 let revealObserver;
 function setupRevealObserver() {
   if (revealObserver) revealObserver.disconnect();
@@ -260,7 +260,6 @@ function renderMedicines(meds) {
       <div class="card-actions">
         <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
       </div>`;
-    // Make card navigable but allow the button to work
     card.addEventListener(
       "click",
       () => (window.location.href = `medicine-details.html?id=${med.id}`)
@@ -400,7 +399,7 @@ function renderCart() {
   markRevealsNow();
 }
 
-// Checkout modal
+// Checkout modal (used on pages with modal)
 function openCheckout() {
   const m = document.getElementById("checkout-modal");
   if (m) m.setAttribute("aria-hidden", "false");
@@ -409,6 +408,7 @@ function closeCheckout() {
   const m = document.getElementById("checkout-modal");
   if (m) m.setAttribute("aria-hidden", "true");
 }
+
 async function apiCreateOrder(payload) {
   const resp = await fetch(`${API_BASE}/api/orders`, {
     method: "POST",
@@ -422,6 +422,7 @@ async function apiCreateOrder(payload) {
   }
   return resp.json();
 }
+
 function setupCartUI() {
   const btn = document.getElementById("cart-button");
   if (btn) btn.onclick = openCart;
@@ -450,7 +451,6 @@ function setupCartUI() {
         name: String(data.name || "").trim(),
         phone: String(data.phone || "").trim(),
         location: String(data.location || "").trim(),
-        doctorRecommended: data.doctorRecommended || "no",
       };
       if (!customer.name || !customer.phone || !customer.location) {
         alert("Please fill name, phone and location.");
@@ -475,13 +475,13 @@ function setupCartUI() {
       const original = submitBtn ? submitBtn.textContent : "";
       if (submitBtn) submitBtn.textContent = "Processing...";
       try {
-        const { order } = await apiCreateOrder(payload);
+        await apiCreateOrder(payload);
         cart.items = [];
         saveCart();
         updateCartBadge();
         renderCart?.();
+        showToast("Order placed");
         if (submitBtn) submitBtn.textContent = original;
-        alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
         closeCheckout?.();
         closeCart?.();
         window.location.href = "cart.html";
@@ -494,7 +494,7 @@ function setupCartUI() {
   }
 }
 
-// Delegated buttons (Add to cart everywhere)
+// Delegated buttons
 document.addEventListener("click", (e) => {
   const addBtn = e.target.closest(".add-to-cart");
   if (addBtn) {
@@ -508,20 +508,13 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Page initializers
-function onMedicinesPageLoad() {
-  if (!document.querySelector(".medicine-grid")) return;
-  setupFilters();
-  const q = localStorage.getItem("medidexSearchQuery") || "";
-  localStorage.removeItem("medidexSearchQuery");
-  const input = document.querySelector(".search-bar input");
-  if (input && q) input.value = q;
-  applyFilters();
-}
+// Cart page (separate page)
 function onCartPageLoad() {
   const host = document.getElementById("cart-page-items");
   const totalEl = document.getElementById("cart-page-total");
-  if (!host || !totalEl) return;
+  const form = document.getElementById("cart-checkout-form");
+  if (!host || !totalEl || !form) return;
+
   function renderCartPage() {
     host.innerHTML = "";
     cart.items.forEach((it) => {
@@ -564,34 +557,63 @@ function onCartPageLoad() {
     setupRevealObserver();
     markRevealsNow();
   }
-  renderCartPage();
-}
 
-// Mobile bottom action bar for details page
-function setupDetailsMobileBar(medId) {
-  const bar = document.getElementById("mobile-action-bar");
-  const btn = document.getElementById("mobile-add-btn");
-  if (!bar || !btn) return;
-  btn.classList.add("add-to-cart");
-  btn.dataset.id = String(medId);
-  function refreshBar() {
-    if (window.innerWidth <= 900) {
-      document.body.classList.add("has-mobile-bar");
-      bar.setAttribute("aria-hidden", "false");
-    } else {
-      document.body.classList.remove("has-mobile-bar");
-      bar.setAttribute("aria-hidden", "true");
+  renderCartPage();
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    const customer = {
+      name: String(data.name || "").trim(),
+      phone: String(data.phone || "").trim(),
+      location: String(data.location || "").trim(),
+      payment: String(data.payment || "COD"),
+    };
+    if (!customer.name || !customer.phone || !customer.location) {
+      alert("Please fill name, phone and location.");
+      return;
     }
-  }
-  refreshBar();
-  window.addEventListener("resize", refreshBar);
+    if (cart.items.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+    const items = cart.items.map((it) => {
+      const med = findMed(it.id) || {};
+      return {
+        id: it.id,
+        name: med.name || "",
+        price: Number(med.price || 0),
+        qty: Number(it.qty || 1),
+      };
+    });
+
+    try {
+      await apiCreateOrder({
+        customer: {
+          name: customer.name,
+          phone: customer.phone,
+          location: customer.location,
+        },
+        items,
+      });
+      cart.items = [];
+      saveCart();
+      renderCartPage();
+      showToast("Order placed");
+      window.location.href = "index.html";
+    } catch (err) {
+      alert(`Checkout failed: ${err?.message || "Unknown error"}`);
+      console.error("Checkout error:", err);
+    }
+  };
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   ensureToast();
   loadCart();
   setupCartUI();
-  onMedicinesPageLoad();
+  // Auto-run cart page init if present
+  if (document.getElementById("cart-page-items")) onCartPageLoad();
   setTimeout(() => {
     document.querySelectorAll(".medicine-card").forEach(addReveal);
     setupRevealObserver();

@@ -108,13 +108,6 @@
           <label
             >Location<textarea name="location" rows="2" required></textarea>
           </label>
-          <label class="row"
-            ><span>Doctor recommended?</span>
-            <select name="doctorRecommended">
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
-            </select>
-          </label>
           <div class="modal-actions">
             <button type="button" class="btn" id="checkout-cancel">
               Cancel</button
@@ -155,11 +148,13 @@
               () =>
                 (window.location.href = `medicine-details.html?id=${med.id}`)
             );
-            card
-              .querySelectorAll(".btn")
-              .forEach((b) =>
-                b.addEventListener("click", (e) => e.stopPropagation())
-              );
+            const btn = card.querySelector(".add-to-cart");
+            if (btn)
+              btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(med.id, 1);
+              });
             grid.appendChild(card);
           });
         }

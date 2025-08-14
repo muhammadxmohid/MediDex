@@ -63,6 +63,7 @@
           class="cart-items"
           aria-live="polite"
         ></section>
+
         <aside style="position: sticky; top: 12px; display: grid; gap: 12px">
           <div
             class="cart-drawer"
@@ -81,6 +82,7 @@
               </div>
             </div>
           </div>
+
           <form
             id="cart-checkout-form"
             class="modal-body"
@@ -99,13 +101,12 @@
                 pattern="[0-9+\-() ]{7,}"
             /></label>
             <label
-              >Location<textarea name="location" rows="2" required></textarea>
+              >Address<textarea name="location" rows="2" required></textarea>
             </label>
-            <label class="row"
-              ><span>Doctor recommended?</span>
-              <select name="doctorRecommended">
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
+            <label
+              >Payment method
+              <select name="payment" required>
+                <option value="COD" selected>Cash on Delivery (COD)</option>
               </select>
             </label>
             <div class="modal-actions">
