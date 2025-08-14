@@ -24,7 +24,10 @@
   async function fetchOrders(key) {
     const url = `${API_BASE}/api/orders?key=${encodeURIComponent(key)}`;
     const resp = await fetch(url, { method: "GET", mode: "cors" });
-    if (!resp.ok) throw new Error(`${resp.status}`);
+    if (!resp.ok) {
+      const msg = await resp.text().catch(() => "");
+      throw new Error(msg || `HTTP ${resp.status}`);
+    }
     return resp.json();
   }
   function renderOrders(data) {
@@ -94,7 +97,8 @@
     if (savedKey) {
       fetchOrders(savedKey)
         .then(renderOrders)
-        .catch(() => {
+        .catch((err) => {
+          ordersError.textContent = `Error loading orders: ${err.message}`;
           ordersError.style.display = "block";
         });
     }
@@ -107,7 +111,8 @@
           const data = await fetchOrders(key);
           sessionStorage.setItem("ownerKey", key);
           renderOrders(data);
-        } catch {
+        } catch (err) {
+          ordersError.textContent = `Error loading orders: ${err.message}`;
           ordersError.style.display = "block";
         }
       });

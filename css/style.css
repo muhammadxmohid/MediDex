@@ -63,6 +63,8 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* Header */
 header {
   background: var(--brand);
   color: #fff;
@@ -142,6 +144,8 @@ nav a:hover {
   display: grid;
   place-items: center;
 }
+
+/* Search */
 .search-bar {
   position: relative;
   display: flex;
@@ -206,6 +210,8 @@ nav a:hover {
 .suggestions div[aria-selected="true"] {
   background: var(--surface-2);
 }
+
+/* Toolbar */
 .toolbar {
   max-width: 1100px;
   margin: 0 auto;
@@ -227,6 +233,8 @@ nav a:hover {
   color: var(--muted);
   font-size: 0.92rem;
 }
+
+/* Grid + Cards */
 .medicine-grid {
   max-width: 1200px;
   margin: 0 auto;
@@ -332,6 +340,8 @@ nav a:hover {
 .btn:hover {
   filter: brightness(0.97);
 }
+
+/* Details */
 #medicine-details {
   display: grid;
   grid-template-columns: 1fr 440px;
@@ -377,6 +387,8 @@ nav a:hover {
     order: 2;
   }
 }
+
+/* Footer */
 footer {
   background: var(--surface);
   border-top: 1px solid var(--border);
@@ -385,6 +397,8 @@ footer {
   padding: 16px;
   margin-top: auto;
 }
+
+/* Cart drawer + modal */
 .cart-drawer {
   position: fixed;
   inset: 0;
@@ -481,6 +495,7 @@ footer {
   justify-content: space-between;
   font-weight: 700;
 }
+
 .modal {
   position: fixed;
   inset: 0;
@@ -537,6 +552,8 @@ footer {
   gap: 10px;
   padding-top: 6px;
 }
+
+/* Mobile */
 @media (max-width: 768px) {
   nav {
     display: none;
@@ -568,7 +585,7 @@ footer {
   }
 }
 
-/* Cart page responsive layout */
+/* Cart page layout */
 .cart-page-layout {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -595,7 +612,7 @@ footer {
 /* Sticky bottom action bar (details mobile) */
 .has-mobile-bar {
   overflow-x: hidden;
-  padding-bottom: 64px; /* space for bar */
+  padding-bottom: 64px;
 }
 #mobile-action-bar {
   position: fixed;
@@ -622,5 +639,33 @@ footer {
 @media (min-width: 901px) {
   #mobile-action-bar {
     display: none !important;
+  }
+}
+
+/* Toasts */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  z-index: 1700;
+}
+.toast {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: toast-in 0.25s ease forwards;
+}
+@keyframes toast-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

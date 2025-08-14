@@ -14,7 +14,7 @@ const API_BASE =
   } catch {}
 })();
 
-// ===== Sample data (unchanged) =====
+// ===== Sample data =====
 const medicines = [
   {
     id: 1,
@@ -176,6 +176,30 @@ function money(n) {
   return `$${Number(n || 0).toFixed(2)}`;
 }
 
+// ===== Toasts =====
+let toastHost;
+function ensureToast() {
+  if (!toastHost) {
+    toastHost = document.createElement("div");
+    toastHost.id = "toast";
+    document.body.appendChild(toastHost);
+  }
+}
+function showToast(text) {
+  ensureToast();
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = text;
+  toastHost.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = "0";
+    el.style.transition = "opacity .2s";
+  }, 1600);
+  setTimeout(() => {
+    el.remove();
+  }, 1900);
+}
+
 // ===== Reveal on scroll (animations) =====
 let revealObserver;
 function setupRevealObserver() {
@@ -312,17 +336,10 @@ function addToCart(id, qty = 1) {
   saveCart();
   updateCartBadge();
   renderCart?.();
+  showToast("Added to cart");
 }
 function removeFromCart(id) {
   cart.items = cart.items.filter((i) => i.id !== id);
-  saveCart();
-  updateCartBadge();
-  renderCart?.();
-}
-function setQty(id, qty) {
-  const it = cart.items.find((i) => i.id === id);
-  if (!it) return;
-  it.qty = Math.max(1, qty);
   saveCart();
   updateCartBadge();
   renderCart?.();
@@ -397,6 +414,14 @@ async function apiCreateOrder(payload) {
   return resp.json();
 }
 
+function setQty(id, qty) {
+  const it = cart.items.find((i) => i.id === id);
+  if (!it) return;
+  it.qty = Math.max(1, qty);
+  saveCart();
+  updateCartBadge();
+  renderCart?.();
+}
 function setupCartUI() {
   const btn = document.getElementById("cart-button");
   if (btn) btn.onclick = openCart;
@@ -469,7 +494,7 @@ function setupCartUI() {
   }
 }
 
-// Delegated buttons (no Buy Now)
+// Delegated buttons (Add to cart everywhere)
 document.addEventListener("click", (e) => {
   const addBtn = e.target.closest(".add-to-cart");
   if (addBtn) {
@@ -594,6 +619,7 @@ function setupDetailsMobileBar(medId) {
   const bar = document.getElementById("mobile-action-bar");
   const btn = document.getElementById("mobile-add-btn");
   if (!bar || !btn) return;
+  btn.classList.add("add-to-cart"); // ensure delegated handler picks it up
   btn.dataset.id = String(medId);
   function refreshBar() {
     if (window.innerWidth <= 900) {
@@ -609,10 +635,10 @@ function setupDetailsMobileBar(medId) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  ensureToast();
   loadCart();
   setupCartUI();
   onMedicinesPageLoad();
-  // featured cards animate
   setTimeout(() => {
     document.querySelectorAll(".medicine-card").forEach(addReveal);
     setupRevealObserver();
