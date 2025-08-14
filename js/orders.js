@@ -3,6 +3,7 @@
     location.hostname === "localhost" || location.hostname === "127.0.0.1"
       ? "http://localhost:3001"
       : "https://medidex-production.up.railway.app";
+
   const keyForm = document.getElementById("owner-key-form");
   const ordersList = document.getElementById("orders-list");
   const ordersEmpty = document.getElementById("orders-empty");
@@ -10,17 +11,29 @@
   const tbody = document.getElementById("orders-tbody");
   const itemsHost = document.getElementById("order-items");
 
-  function fmtDate(iso) {
+  function fmtDateParts(iso) {
     try {
-      return new Date(iso).toLocaleString();
+      const d = new Date(iso);
+      return {
+        date: d.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        }),
+        time: d.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
     } catch {
-      return iso;
+      return { date: iso, time: "" };
     }
   }
   function money(n) {
     const x = Number(n || 0);
     return `$${x.toFixed(2)}`;
   }
+
   async function fetchOrders(key) {
     const url = `${API_BASE}/api/orders?key=${encodeURIComponent(key)}`;
     const resp = await fetch(url, { method: "GET", mode: "cors" });
@@ -30,6 +43,7 @@
     }
     return resp.json();
   }
+
   function renderOrders(data) {
     tbody.innerHTML = "";
     itemsHost.innerHTML = "";
@@ -42,11 +56,11 @@
     ordersEmpty.style.display = "none";
     ordersList.style.display = "block";
     list.forEach((o) => {
+      const { date, time } = fmtDateParts(o.createdAt);
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td style="padding:10px; border-bottom:1px solid var(--border);">${fmtDate(
-          o.createdAt
-        )}</td>
+        <td style="padding:10px; border-bottom:1px solid var(--border);">${date}</td>
+        <td style="padding:10px; border-bottom:1px solid var(--border);">${time}</td>
         <td style="padding:10px; border-bottom:1px solid var(--border); font-family: ui-monospace, Menlo, Consolas, 'Courier New', monospace;">${
           o.id
         }</td>

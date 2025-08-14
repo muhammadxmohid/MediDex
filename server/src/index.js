@@ -6,8 +6,9 @@ import { PrismaClient, Prisma } from "@prisma/client";
 const app = express();
 const prisma = new PrismaClient();
 const PORT = Number(process.env.PORT || 3001);
+const OWNER_KEY = process.env.OWNER_KEY || "";
 
-// Normalize origins like https://host/path -> https://host
+// normalize origins like https://host/path -> https://host
 function normalizeOrigin(value) {
   if (!value) return null;
   try {
@@ -17,7 +18,6 @@ function normalizeOrigin(value) {
     return value.replace(/\/+$/, "");
   }
 }
-
 const allowedOrigins = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((s) => s.trim())
@@ -27,12 +27,11 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "")
 
 const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // curl/Postman
+    if (!origin) return cb(null, true);
     const normalized = normalizeOrigin(origin);
     if (allowedOrigins.length === 0 || allowedOrigins.includes(normalized)) {
       return cb(null, true);
     }
-    console.warn("CORS blocked:", origin);
     return cb(new Error("CORS not allowed"), false);
   },
   methods: ["GET", "POST", "OPTIONS"],
@@ -47,6 +46,27 @@ app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+// Owner-only: list recent orders
+app.get("/api/orders", async (req, res) => {
+  try {
+    if (!OWNER_KEY)
+      return res.status(501).json({ error: "OWNER_KEY not configured" });
+    if ((req.query.key || "") !== OWNER_KEY)
+      return res.status(401).json({ error: "Unauthorized" });
+
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: { items: true },
+    });
+
+    res.json({ ok: true, orders });
+  } catch (err) {
+    res.status(500).json({ error: "Server error fetching orders" });
+  }
+});
+
+// Create order
 app.post("/api/orders", async (req, res) => {
   try {
     const { customer, items } = req.body || {};
@@ -55,25 +75,22 @@ app.post("/api/orders", async (req, res) => {
         .status(400)
         .json({ error: "Invalid payload: missing customer or items" });
     }
-
     const { name, phone, location, doctorRecommended } = customer || {};
     if (!name || !phone || !location) {
       return res.status(400).json({ error: "Missing name/phone/location" });
     }
 
-    // Accept either {id, qty} or {productId, quantity}; always require name, price
+    // accept either {id, qty} or {productId, quantity}
     const normalizedItems = items.map((it) => {
       const medId = Number(it.productId ?? it.id);
       const qty = Number(it.quantity ?? it.qty);
       const priceNum = Number(it.price);
       const nameStr = String(it.name || "");
-
       if (!medId || !qty || !Number.isFinite(priceNum) || !nameStr) {
         throw new Error(
           "Each item must include productId/id, name, price (number), quantity/qty"
         );
       }
-
       return {
         medId,
         name: nameStr,
@@ -102,11 +119,11 @@ app.post("/api/orders", async (req, res) => {
       include: { items: true },
     });
 
-    return res.status(201).json({ ok: true, orderId: order.id, order });
+    return res.status(201).json({ ok: true, order });
   } catch (err) {
-    console.error("Order error:", err);
-    const message = err?.message || "Server error while creating order";
-    return res.status(500).json({ error: message });
+    return res
+      .status(500)
+      .json({ error: err?.message || "Server error while creating order" });
   }
 });
 
