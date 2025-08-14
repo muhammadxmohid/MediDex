@@ -176,24 +176,46 @@ function money(n) {
   return `$${Number(n || 0).toFixed(2)}`;
 }
 
-// ===== Toasts =====
+// ===== Toasts (CSS-injected to guarantee visibility) =====
 let toastHost;
 function ensureToast() {
   if (!toastHost) {
     toastHost = document.createElement("div");
     toastHost.id = "toast";
+    toastHost.style.position = "fixed";
+    toastHost.style.left = "50%";
+    toastHost.style.bottom = "16px";
+    toastHost.style.transform = "translateX(-50%)";
+    toastHost.style.display = "grid";
+    toastHost.style.gap = "8px";
+    toastHost.style.zIndex = "999999";
     document.body.appendChild(toastHost);
   }
 }
 function showToast(text) {
   ensureToast();
   const el = document.createElement("div");
-  el.className = "toast";
   el.textContent = text;
+  el.style.background =
+    getComputedStyle(document.body).getPropertyValue("--surface") || "#fff";
+  el.style.color =
+    getComputedStyle(document.body).getPropertyValue("--text") || "#111";
+  el.style.border = `1px solid ${
+    getComputedStyle(document.body).getPropertyValue("--border") || "#e5e7eb"
+  }`;
+  el.style.padding = "10px 14px";
+  el.style.borderRadius = "10px";
+  el.style.boxShadow = "0 6px 24px rgba(16,24,40,0.12)";
+  el.style.opacity = "0";
+  el.style.transform = "translateY(8px)";
+  el.style.transition = "opacity .2s ease, transform .2s ease";
   toastHost.appendChild(el);
+  requestAnimationFrame(() => {
+    el.style.opacity = "1";
+    el.style.transform = "translateY(0)";
+  });
   setTimeout(() => {
     el.style.opacity = "0";
-    el.style.transition = "opacity .2s";
   }, 700);
   setTimeout(() => {
     el.remove();
@@ -449,19 +471,11 @@ function setupCartUI() {
       const data = Object.fromEntries(new FormData(form).entries());
       const customer = {
         name: String(data.name || "").trim(),
-        phone: String(data.phone || "")
-          .trim()
-          .replace(/[^0-9]/g, "")
-          .slice(0, 11),
+        phone: String(data.phone || "").trim(),
         location: String(data.location || "").trim(),
       };
-      if (
-        !customer.name ||
-        !customer.phone ||
-        customer.phone.length !== 11 ||
-        !customer.location
-      ) {
-        alert("Please fill name, 11‑digit phone and address.");
+      if (!customer.name || !customer.phone || !customer.location) {
+        alert("Please fill name, phone and address.");
         return;
       }
       if (cart.items.length === 0) {
@@ -573,20 +587,12 @@ function onCartPageLoad() {
     const data = Object.fromEntries(new FormData(form).entries());
     const customer = {
       name: String(data.name || "").trim(),
-      phone: String(data.phone || "")
-        .trim()
-        .replace(/[^0-9]/g, "")
-        .slice(0, 11),
+      phone: String(data.phone || "").trim(),
       location: String(data.location || "").trim(),
       payment: "COD",
     };
-    if (
-      !customer.name ||
-      !customer.phone ||
-      customer.phone.length !== 11 ||
-      !customer.location
-    ) {
-      alert("Please fill name, 11‑digit phone and address.");
+    if (!customer.name || !customer.phone || !customer.location) {
+      alert("Please fill name, phone and address.");
       return;
     }
     if (cart.items.length === 0) {
