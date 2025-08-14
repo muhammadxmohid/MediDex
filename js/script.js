@@ -449,11 +449,19 @@ function setupCartUI() {
       const data = Object.fromEntries(new FormData(form).entries());
       const customer = {
         name: String(data.name || "").trim(),
-        phone: String(data.phone || "").trim(),
+        phone: String(data.phone || "")
+          .trim()
+          .replace(/[^0-9]/g, "")
+          .slice(0, 11),
         location: String(data.location || "").trim(),
       };
-      if (!customer.name || !customer.phone || !customer.location) {
-        alert("Please fill name, phone and location.");
+      if (
+        !customer.name ||
+        !customer.phone ||
+        customer.phone.length !== 11 ||
+        !customer.location
+      ) {
+        alert("Please fill name, 11‑digit phone and address.");
         return;
       }
       if (cart.items.length === 0) {
@@ -565,12 +573,20 @@ function onCartPageLoad() {
     const data = Object.fromEntries(new FormData(form).entries());
     const customer = {
       name: String(data.name || "").trim(),
-      phone: String(data.phone || "").trim(),
+      phone: String(data.phone || "")
+        .trim()
+        .replace(/[^0-9]/g, "")
+        .slice(0, 11),
       location: String(data.location || "").trim(),
-      payment: String(data.payment || "COD"),
+      payment: "COD",
     };
-    if (!customer.name || !customer.phone || !customer.location) {
-      alert("Please fill name, phone and location.");
+    if (
+      !customer.name ||
+      !customer.phone ||
+      customer.phone.length !== 11 ||
+      !customer.location
+    ) {
+      alert("Please fill name, 11‑digit phone and address.");
       return;
     }
     if (cart.items.length === 0) {
@@ -612,7 +628,6 @@ document.addEventListener("DOMContentLoaded", () => {
   ensureToast();
   loadCart();
   setupCartUI();
-  // Auto-run cart page init if present
   if (document.getElementById("cart-page-items")) onCartPageLoad();
   setTimeout(() => {
     document.querySelectorAll(".medicine-card").forEach(addReveal);
