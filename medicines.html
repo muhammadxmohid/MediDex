@@ -28,7 +28,9 @@
           role="button"
           tabindex="0"
         >
-          <span></span><span></span><span></span>
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
         <button
           id="theme-toggle"
@@ -37,10 +39,6 @@
         >
           🌙
         </button>
-        <a href="cart.html" class="cart-button" aria-label="Open cart"
-          ><i class="fas fa-shopping-cart"></i
-          ><span id="cart-count" class="cart-count">0</span></a
-        >
       </div>
       <form class="search-bar" role="search" autocomplete="off">
         <input
@@ -53,10 +51,10 @@
           <i class="fas fa-search"></i>
         </button>
       </form>
-      <div class="toolbar" role="region" aria-label="Filters">
+      <div class="toolbar" role="region" aria-label="Filters and sorting">
         <div class="toolbar-left">
-          <label
-            ><span class="sr-only">Filter by category</span>
+          <label>
+            <span class="sr-only">Filter by category</span>
             <select id="filter-category" class="select">
               <option value="">All categories</option>
             </select>
@@ -78,12 +76,17 @@
           class="medicine-grid"
           aria-live="polite"
           aria-label="List of medicines"
-        ></div>
+        >
+          <!-- JS renders medicines here -->
+        </div>
       </section>
     </main>
 
-    <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
+    <footer>
+      <p>&copy; 2025 MediDex. All rights reserved.</p>
+    </footer>
 
+    <!-- Cart Drawer and Checkout Modal -->
     <div id="cart-drawer" class="cart-drawer" aria-hidden="true">
       <div class="cart-drawer-inner">
         <div class="cart-drawer-header">
@@ -118,7 +121,7 @@
               name="phone"
               type="tel"
               required
-              pattern="[0-9+\\-() ]{7,}"
+              pattern="[0-9+\-() ]{7,}"
           /></label>
           <label
             >Location<textarea name="location" rows="2" required></textarea>

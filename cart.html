@@ -55,16 +55,9 @@
       </form>
     </header>
 
-    <main id="cart-page" style="max-width: 1100px; margin: auto; padding: 1rem">
-      <h1 style="margin-bottom: 10px">Your Cart</h1>
-      <div
-        style="
-          display: grid;
-          grid-template-columns: 1fr 320px;
-          gap: 16px;
-          align-items: start;
-        "
-      >
+    <main id="cart-page" style="max-width: 1200px; margin: auto; padding: 16px">
+      <h1 style="margin-bottom: 12px">Your Cart</h1>
+      <div class="cart-page-layout">
         <section
           id="cart-page-items"
           class="cart-items"
@@ -103,7 +96,7 @@
                 name="phone"
                 type="tel"
                 required
-                pattern="[0-9+\\-() ]{7,}"
+                pattern="[0-9+\-() ]{7,}"
             /></label>
             <label
               >Location<textarea name="location" rows="2" required></textarea>

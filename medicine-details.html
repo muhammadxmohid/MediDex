@@ -55,30 +55,33 @@
       </form>
     </header>
 
-    <main style="max-width: 1100px; margin: auto; padding: 1rem">
+    <main style="max-width: 1200px; margin: auto; padding: 16px">
       <a
         href="medicines.html"
         style="
-          color: #0077b6;
+          color: var(--brand);
           font-weight: bold;
-          margin-bottom: 1rem;
+          margin-bottom: 12px;
           display: inline-block;
         "
         >← Back to All Medicines</a
       >
-      <article
-        id="medicine-details"
-        style="
-          background: white;
-          padding: 1rem;
-          border-radius: 5px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        "
-      ></article>
+      <article id="medicine-details"></article>
     </main>
 
-    <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
+    <footer><p>&copy: 2025 MediDex. All rights reserved.</p></footer>
 
+    <!-- Sticky bottom bar for mobile add-to-cart -->
+    <div id="mobile-action-bar" aria-hidden="true">
+      <div class="bar-inner">
+        <button id="mobile-add-btn" class="btn primary" data-id="">
+          Add to cart
+        </button>
+        <a class="btn" href="cart.html">Go to cart</a>
+      </div>
+    </div>
+
+    <!-- Cart Drawer -->
     <div id="cart-drawer" class="cart-drawer" aria-hidden="true">
       <div class="cart-drawer-inner">
         <div class="cart-drawer-header">
@@ -98,6 +101,7 @@
       <div class="cart-drawer-backdrop"></div>
     </div>
 
+    <!-- Checkout Modal -->
     <div id="checkout-modal" class="modal" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-header">
@@ -113,7 +117,7 @@
               name="phone"
               type="tel"
               required
-              pattern="[0-9+\\-() ]{7,}"
+              pattern="[0-9+\-() ]{7,}"
           /></label>
           <label
             >Location<textarea name="location" rows="2" required></textarea>
@@ -149,16 +153,15 @@
           return;
         }
         container.innerHTML = `
-          <h1>${med.name}</h1>
-          <img src="${med.image}" alt="${med.name}" style="max-width:100%; height:auto; border-radius:5px; margin-bottom:1rem;" />
-          <p><strong>Category:</strong> ${med.category}</p>
-          <p>${med.description}</p>
-          <div class="card-actions">
+          <h1 class="reveal">${med.name}</h1>
+          <p class="badge" style="justify-self:start;">${med.category}</p>
+          <p class="reveal">${med.description}</p>
+          <div class="card-actions" style="justify-content:flex-start;">
             <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
-            <button class="btn primary buy-now" data-id="${med.id}">Buy now</button>
           </div>
-          <h3>Usage</h3><p>Follow your healthcare provider’s instructions carefully.</p>
-          <h3>Side Effects</h3><p>May cause nausea, dizziness, or allergic reactions in some people.</p>`;
+          <img class="reveal" src="${med.image}" alt="${med.name}" />`;
+        if (typeof setupDetailsMobileBar === "function")
+          setupDetailsMobileBar(id);
       });
     </script>
   </body>
