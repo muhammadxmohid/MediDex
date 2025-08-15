@@ -24,6 +24,22 @@ const API_BASE =
   } catch {}
 })();
 
+// Clear cart on full page refresh (reload) only
+(function clearCartOnReload() {
+  try {
+    const nav =
+      (performance.getEntriesByType &&
+        performance.getEntriesByType("navigation")[0]) ||
+      null;
+    const isReload = nav
+      ? nav.type === "reload"
+      : performance &&
+        performance.navigation &&
+        performance.navigation.type === 1;
+    if (isReload) localStorage.removeItem("medidexCart");
+  } catch {}
+})();
+
 // ===== Sample data (unchanged) =====
 const medicines = [
   {
@@ -218,6 +234,7 @@ let toastHost;
 function ensureToast() {
   if (!toastHost) {
     toastHost = document.createElement("div");
+    toastHost.id = "toast";
     Object.assign(toastHost.style, {
       position: "fixed",
       left: "50%",
@@ -650,20 +667,24 @@ function onCartPageLoad() {
   }
 }
 
-// Mobile bottom action bar for details page
+// Mobile bottom action bar for details page (single controls for all devices)
 function setupDetailsMobileBar(medId) {
   const bar = document.getElementById("mobile-action-bar");
   const btn = document.getElementById("mobile-add-btn");
   if (!bar || !btn) return;
   btn.dataset.id = String(medId);
-  function refreshBar() {
-    if (window.innerWidth <= 900) {
-      document.body.classList.add("has-mobile-bar");
-      bar.setAttribute("aria-hidden", "false");
-    } else {
-      document.body.classList.remove("has-mobile-bar");
-      bar.setAttribute("aria-hidden", "true");
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = Number(btn.dataset.id);
+    if (id) {
+      addToCart(id, 1);
+      showToast("Added to cart");
     }
+  };
+  function refreshBar() {
+    document.body.classList.add("has-mobile-bar");
+    bar.setAttribute("aria-hidden", "false");
   }
   refreshBar();
   window.addEventListener("resize", refreshBar);

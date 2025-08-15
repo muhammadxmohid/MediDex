@@ -69,18 +69,102 @@
       <article id="medicine-details"></article>
     </main>
 
-    <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
+    <footer><p>&copy: 2025 MediDex. All rights reserved.</p></footer>
 
-    <!-- Sticky bottom bar (mobile) -->
+    <!-- Sticky bottom bar for mobile add-to-cart -->
     <div id="mobile-action-bar" aria-hidden="true">
       <div class="bar-inner">
         <button id="mobile-add-btn" class="btn primary" data-id="">
           Add to cart
         </button>
-        <a id="mobile-go-btn" class="btn" href="cart.html">Go to cart</a>
+        <a class="btn" href="cart.html">Go to cart</a>
       </div>
     </div>
 
+    <div id="cart-drawer" class="cart-drawer" aria-hidden="true">
+      <div class="cart-drawer-inner">
+        <div class="cart-drawer-header">
+          <h3>Cart</h3>
+          <button id="cart-close" class="icon-btn" aria-label="Close cart">
+            ✕
+          </button>
+        </div>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-drawer-footer">
+          <div class="cart-total">
+            <span>Total</span><span id="cart-total">$0.00</span>
+          </div>
+          <button id="checkout-button" class="btn primary">Checkout</button>
+        </div>
+      </div>
+      <div class="cart-drawer-backdrop"></div>
+    </div>
+
+    <div id="checkout-modal" class="modal" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Checkout</h3>
+          <button id="checkout-close" class="icon-btn" aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <form id="checkout-form" class="modal-body">
+          <label>Full name<input name="name" type="text" required /></label>
+          <label
+            >Phone number<input
+              name="phone"
+              type="tel"
+              required
+              pattern="[0-9+\-() ]{7,}"
+          /></label>
+          <label
+            >Location<textarea name="location" rows="2" required></textarea>
+          </label>
+          <label class="row"
+            ><span>Doctor recommended?</span>
+            <select name="doctorRecommended">
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </label>
+          <div class="modal-actions">
+            <button type="button" class="btn" id="checkout-cancel">
+              Cancel
+            </button>
+            <button type="submit" class="btn primary">Place order</button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-backdrop"></div>
+    </div>
+
     <script src="js/script.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const id = Number(params.get("id"));
+        const container = document.getElementById("medicine-details");
+        if (!container) return;
+        const med = medicines.find((m) => m.id === id);
+        if (!med) {
+          container.innerHTML = "<p>Medicine not found.</p>";
+          return;
+        }
+        container.innerHTML = `
+          <h1 class="reveal">${med.name}</h1>
+          <p class="badge" style="justify-self:start;">${med.category}</p>
+          <p class="reveal">${med.description}</p>
+          <img class="reveal" src="${med.image}" alt="${med.name}" />`;
+        if (typeof setupDetailsMobileBar === "function")
+          setupDetailsMobileBar(id);
+        const mbtn = document.getElementById("mobile-add-btn");
+        if (mbtn)
+          mbtn.addEventListener("click", () => {
+            try {
+              showToast("Added to cart");
+            } catch (e) {}
+          });
+      });
+    </script>
   </body>
 </html>
