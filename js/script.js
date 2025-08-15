@@ -381,13 +381,13 @@ function updateCartBadge() {
   if (c) c.textContent = cart.items.reduce((s, it) => s + it.qty, 0);
 }
 function addToCart(id, qty = 1) {
-  const it = cart.items.find((i) => i.id === id);
-  if (it) it.qty += qty;
+  const existing = cart.items.find((i) => i.id === id);
+  if (existing) existing.qty += qty;
   else cart.items.push({ id, qty });
   saveCart();
   updateCartBadge();
   renderCart?.();
-  showToast("Added to cart");
+  showToast("Added to cart"); // ensures popup on index and medicines pages
 }
 function removeFromCart(id) {
   cart.items = cart.items.filter((i) => i.id !== id);
