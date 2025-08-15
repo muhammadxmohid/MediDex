@@ -1,171 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MediDex - Orders (Owner)</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <style>
-      @media (max-width: 900px) {
-        .orders-layout {
-          grid-template-columns: 1fr !important;
-        }
-        #order-items {
-          position: static !important;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="nav-container">
-        <div class="logo">
-          <a href="index.html" style="color: white">MediDex</a>
-        </div>
-        <nav>
-          <a href="index.html">Home</a>
-          <a href="medicines.html">All Medicines</a>
-          <a href="cart.html">Cart</a>
-        </nav>
-        <div
-          class="hamburger"
-          aria-label="Toggle menu"
-          role="button"
-          tabindex="0"
-        >
-          <span></span><span></span><span></span>
-        </div>
-        <button
-          id="theme-toggle"
-          class="theme-toggle"
-          aria-label="Toggle theme"
-        >
-          🌙
-        </button>
-      </div>
-    </header>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>MediDex - Orders (Owner)</title>
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+		<style>
+			@media (max-width: 900px){
+				.orders-layout{ grid-template-columns: 1fr !important; }
+				#order-items{ position: static !important; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div class="nav-container">
+				<div class="logo"><a href="index.html" style="color: white">MediDex</a></div>
+				<nav>
+					<a href="index.html">Home</a>
+					<a href="medicines.html">All Medicines</a>
+					<a href="cart.html">Cart</a>
+				</nav>
+				<div class="hamburger" aria-label="Toggle menu" role="button" tabindex="0"><span></span><span></span><span></span></div>
+				<button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌙</button>
+			</div>
+		</header>
 
-    <main style="max-width: 1200px; margin: 0 auto; padding: 16px">
-      <h1 style="margin-bottom: 12px">Owner Orders</h1>
-      <form
-        id="owner-key-form"
-        class="modal-body"
-        style="max-width: 520px; margin: 0 0 12px 0"
-      >
-        <label
-          >Owner access key<input
-            name="key"
-            type="password"
-            placeholder="Enter access key"
-            required
-        /></label>
-        <div class="modal-actions">
-          <button type="submit" class="btn primary">Unlock</button>
-        </div>
-      </form>
+		<main style="max-width: 1200px; margin: 0 auto; padding: 16px;">
+			<h1 style="margin-bottom: 12px;">Owner Orders</h1>
+			<form id="owner-key-form" class="modal-body" style="max-width: 520px; margin: 0 0 12px 0;">
+				<label>Owner access key<input name="key" type="password" placeholder="Enter access key" required /></label>
+				<div class="modal-actions"><button type="submit" class="btn primary">Unlock</button></div>
+			</form>
 
-      <section id="orders-empty" style="display: none; color: var(--muted)">
-        No orders yet.
-      </section>
-      <section id="orders-error" style="display: none; color: #b42318">
-        Error loading orders.
-      </section>
-      <section id="orders-list" style="display: none">
-        <div
-          class="orders-layout"
-          style="
-            display: grid;
-            grid-template-columns: 1fr minmax(280px, 360px);
-            gap: 16px;
-            align-items: start;
-          "
-        >
-          <div
-            class="orders-table-wrap"
-            style="
-              overflow-x: auto;
-              border: 1px solid var(--border);
-              border-radius: 10px;
-              background: var(--surface);
-            "
-          >
-            <table style="width: 100%; border-collapse: collapse">
-              <thead style="background: var(--surface-2)">
-                <tr>
-                  <th
-                    style="
-                      text-align: left;
-                      padding: 10px;
-                      border-bottom: 1px solid var(--border);
-                    "
-                  >
-                    Created
-                  </th>
-                  <th
-                    style="
-                      text-align: left;
-                      padding: 10px;
-                      border-bottom: 1px solid var(--border);
-                    "
-                  >
-                    Order ID
-                  </th>
-                  <th
-                    style="
-                      text-align: left;
-                      padding: 10px;
-                      border-bottom: 1px solid var(--border);
-                    "
-                  >
-                    Customer
-                  </th>
-                  <th
-                    style="
-                      text-align: left;
-                      padding: 10px;
-                      border-bottom: 1px solid var(--border);
-                    "
-                  >
-                    Phone
-                  </th>
-                  <th
-                    style="
-                      text-align: right;
-                      padding: 10px;
-                      border-bottom: 1px solid var(--border);
-                    "
-                  >
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody id="orders-tbody"></tbody>
-            </table>
-          </div>
-          <aside
-            id="order-items"
-            style="
-              position: sticky;
-              top: 12px;
-              border: 1px solid var(--border);
-              border-radius: 10px;
-              background: var(--surface);
-              min-height: 120px;
-              padding: 10px;
-            "
-          >
-            <div style="color: var(--muted)">Select an order to view items</div>
-          </aside>
-        </div>
-      </section>
-    </main>
+			<section id="orders-empty" style="display:none; color: var(--muted);">No orders yet.</section>
+			<section id="orders-error" style="display:none; color: #b42318;">Error loading orders.</section>
+			<section id="orders-list" style="display:none;">
+				<div class="orders-layout" style="display:grid; grid-template-columns: 1fr minmax(280px, 360px); gap:16px; align-items:start;">
+					<div class="orders-table-wrap" style="overflow-x:auto; border:1px solid var(--border); border-radius: 10px; background: var(--surface);">
+						<table style="width:100%; border-collapse: collapse;">
+							<thead style="background: var(--surface-2);">
+								<tr>
+									<th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Created</th>
+									<th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Order ID</th>
+																	<th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Customer</th>
+								<th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Address</th>
+								<th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Phone</th>
+								<th style="text-align:right; padding:10px; border-bottom:1px solid var(--border);">Total</th>
+								<th style="text-align:center; padding:10px; border-bottom:1px solid var(--border);">Done</th>
+								</tr>
+							</thead>
+							<tbody id="orders-tbody"></tbody>
+						</table>
+					</div>
+					<aside id="order-items" style="position:sticky; top:12px; border:1px solid var(--border); border-radius:10px; background: var(--surface); min-height:120px; padding:10px;">
+						<div style="color: var(--muted);">Select an order to view items</div>
+					</aside>
+				</div>
+			</section>
+		</main>
 
-    <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
+		<footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
 
-    <script src="js/orders.js"></script>
-  </body>
+		<script src="js/orders.js"></script>
+	</body>
 </html>
