@@ -228,7 +228,7 @@ nav a:hover {
   font-size: 0.92rem;
 }
 .medicine-grid {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 16px;
   display: grid;
@@ -309,6 +309,12 @@ nav a:hover {
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: calc(2 * 1.5em);
+}
+.medicine-card .price {
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin: 4px 10px 0;
 }
 .card-actions {
   display: flex;
@@ -568,6 +574,18 @@ footer {
   }
 }
 
+/* Desktop-enhanced grid density: 6–7 items per row */
+@media (min-width: 1200px) {
+  .medicine-grid:not(.single) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+@media (min-width: 1600px) {
+  .medicine-grid:not(.single) {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
 /* Cart page responsive layout */
 .cart-page-layout {
   display: grid;
@@ -608,6 +626,53 @@ footer {
   padding: 10px 12px;
   display: none;
   z-index: 1600;
+}
+
+/* Category pills (desktop only) */
+.category-pills {
+  display: none;
+  max-width: 1100px;
+  margin: 6px auto 0;
+  padding: 0 16px;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.category-pills .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    transform 0.12s ease, box-shadow 0.2s ease;
+}
+.category-pills .pill:hover {
+  background: rgba(0, 119, 182, 0.08);
+  border-color: rgba(0, 119, 182, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 119, 182, 0.12);
+}
+.category-pills .pill.active {
+  background: rgba(0, 119, 182, 0.12);
+  border-color: rgba(0, 119, 182, 0.35);
+  color: var(--brand-600);
+  font-weight: 600;
+}
+@media (min-width: 992px) {
+  .category-pills {
+    display: flex;
+  }
+  .toolbar-left {
+    display: none;
+  }
 }
 #mobile-action-bar[aria-hidden="false"] {
   display: block;
