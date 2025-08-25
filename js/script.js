@@ -306,6 +306,7 @@ function renderMedicines(meds) {
       <h3><a href="medicine-details.html?id=${med.id}">${med.name}</a></h3>
       <p><strong>Category:</strong> ${med.category}</p>
       <p>${med.description.substring(0, 80)}...</p>
+      <div class="price">${money(med.price)}</div>
       <div class="card-actions">
         <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
       </div>`;
@@ -349,9 +350,51 @@ function setupFilters() {
       uniqueCategories(medicines)
         .map((c) => `<option value="${c}">${c}</option>`)
         .join("");
-    catSel.addEventListener("change", applyFilters);
+    catSel.addEventListener("change", () => {
+      applyFilters();
+      updateActivePill?.(catSel.value);
+    });
     catSel.dataset.ready = "1";
   }
+  setupCategoryPills();
+}
+
+// Desktop category pills
+function setupCategoryPills() {
+  const host = document.querySelector(".category-pills");
+  if (!host || host.dataset.ready) return;
+  const cats = [""].concat(uniqueCategories(medicines));
+  host.innerHTML = cats
+    .map((c) => {
+      const label = c || "All";
+      return `<button type="button" class="pill" data-value="${c}">${label}</button>`;
+    })
+    .join("");
+  host.addEventListener("click", (e) => {
+    const pill = e.target.closest(".pill");
+    if (!pill) return;
+    const value = pill.getAttribute("data-value") || "";
+    const sel = document.getElementById("filter-category");
+    if (sel) {
+      sel.value = value;
+      applyFilters();
+    }
+    updateActivePill(value);
+  });
+  host.dataset.ready = "1";
+  // initialize active state
+  const sel = document.getElementById("filter-category");
+  updateActivePill(sel ? sel.value : "");
+}
+
+function updateActivePill(value) {
+  const host = document.querySelector(".category-pills");
+  if (!host) return;
+  host.querySelectorAll(".pill").forEach((el) => {
+    if ((el.getAttribute("data-value") || "") === String(value))
+      el.classList.add("active");
+    else el.classList.remove("active");
+  });
 }
 
 // ===== Cart (localStorage) =====
