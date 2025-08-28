@@ -1,1 +1,693 @@
-body { ... }
+/* =========================
+   MediDex - Refined UI (Light/Dark) + Uniform Cards + Cart/Checkout
+   ========================= */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+:root {
+  --bg: #f6f8fb;
+  --text: #101828;
+  --muted: #667085;
+  --brand: #0077b6;
+  --brand-600: #0a6aa0;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --border: #e5e7eb;
+  --ring: rgba(0, 119, 182, 0.18);
+  --card-radius: 12px;
+  --btn-radius: 10px;
+  --shadow: 0 6px 24px rgba(16, 24, 40, 0.06);
+}
+body.dark {
+  --bg: #0b0f16;
+  --text: #e7ebf3;
+  --muted: #9aa6bf;
+  --brand: #4ca3ff;
+  --brand-600: #3a8add;
+  --surface: #121723;
+  --surface-2: #171c28;
+  --border: #222938;
+  --ring: rgba(76, 163, 255, 0.16);
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+body {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+header {
+  background: var(--brand);
+  color: #fff;
+  padding: 14px 0;
+}
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+}
+nav {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+nav a {
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+nav a:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.hamburger {
+  display: none;
+  cursor: pointer;
+  gap: 6px;
+  flex-direction: column;
+}
+.hamburger span {
+  width: 24px;
+  height: 3px;
+  background: #fff;
+  display: block;
+  border-radius: 2px;
+}
+.theme-toggle {
+  margin-left: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.cart-button {
+  margin-left: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 9px;
+  position: relative;
+  cursor: pointer;
+}
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 12px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px auto 8px;
+  max-width: 1100px;
+  padding: 6px 6px 6px 10px;
+  width: calc(100% - 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.search-bar input {
+  flex: 1;
+  border: none;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+}
+.search-bar input:focus {
+  box-shadow: 0 0 0 4px var(--ring);
+}
+.search-bar .search-btn {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.search-bar .search-btn:hover {
+  background: var(--brand-600);
+}
+.suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  display: none;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+.suggestions.active {
+  display: block;
+}
+.suggestions div {
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+.suggestions div:hover,
+.suggestions div[aria-selected="true"] {
+  background: var(--surface-2);
+}
+.toolbar {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 6px 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+.select {
+  appearance: none;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+.results-count {
+  /* color: var(--muted); */
+  font-size: 0.92rem;
+  display: none;
+}
+.medicine-grid {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+.medicine-grid.single {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 360px));
+  justify-content: center;
+}
+.medicine-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease;
+  cursor: pointer;
+}
+.medicine-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 119, 182, 0.35);
+  box-shadow: 0 12px 28px rgba(0, 119, 182, 0.12);
+}
+.medicine-card .img-wrap {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+}
+.medicine-card .img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.medicine-card .badge {
+  margin: 10px auto 0;
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 119, 182, 0.12);
+  color: var(--brand-600);
+  font-weight: 600;
+}
+.medicine-card h3 {
+  font-size: 1.06rem;
+  font-weight: 600;
+  margin: 8px 10px 2px;
+  text-align: center;
+}
+.medicine-card p {
+  font-size: 0.92rem;
+  color: var(--muted);
+  margin: 0 10px 8px;
+  text-align: center;
+}
+.medicine-card h3,
+.medicine-card h3 a {
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.25 * 1em);
+}
+.medicine-card p:last-of-type {
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(2 * 1.5em);
+}
+.medicine-card .price {
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin: 4px 10px 0;
+}
+.card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 12px 14px;
+}
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+}
+.btn.primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+.btn:hover {
+  filter: brightness(0.97);
+}
+#medicine-details {
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 18px;
+  align-items: start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  max-width: 1200px;
+  margin: 16px auto;
+}
+#medicine-details > img {
+  grid-column: 2;
+  grid-row: 1/-1;
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: contain;
+  object-position: center;
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 8px;
+}
+#medicine-details > *:not(img) {
+  grid-column: 1;
+}
+#medicine-details h1 {
+  margin: 4px 0 6px;
+}
+#medicine-details p {
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  #medicine-details {
+    grid-template-columns: 1fr;
+  }
+  #medicine-details > img {
+    grid-column: 1;
+    grid-row: auto;
+    order: 2;
+  }
+}
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  text-align: center;
+  padding: 16px;
+  margin-top: auto;
+}
+.cart-drawer {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 1400;
+}
+.cart-drawer[aria-hidden="false"] {
+  display: block;
+}
+.cart-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+.cart-drawer-inner {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(420px, 100%);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.cart-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.cart-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: grid;
+  gap: 10px;
+}
+.cart-item {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--surface);
+}
+.cart-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+.cart-item-title {
+  font-weight: 600;
+}
+.cart-item-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.cart-qty {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.cart-drawer-footer {
+  border-top: 1px solid var(--border);
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+}
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 1500;
+}
+.modal[aria-hidden="false"] {
+  display: grid;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.modal-dialog {
+  position: relative;
+  margin: auto;
+  width: min(520px, 92%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.modal-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-body {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.modal-body label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+.modal-body input,
+.modal-body textarea,
+.modal-body select {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+@media (max-width: 768px) {
+  nav {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    right: 14px;
+    width: 220px;
+    background: var(--brand);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 1100;
+  }
+  nav.active {
+    display: flex;
+  }
+  .hamburger {
+    display: flex;
+  }
+}
+@media (max-width: 520px) {
+  .medicine-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    padding: 12px;
+  }
+  .medicine-card .img-wrap {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+/* Desktop-enhanced grid density: 6–7 items per row */
+@media (min-width: 1200px) {
+  .medicine-grid:not(.single) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+@media (min-width: 1600px) {
+  .medicine-grid:not(.single) {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+/* Cart page responsive layout */
+.cart-page-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .cart-page-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Sticky bottom action bar (details mobile) */
+.has-mobile-bar {
+  overflow-x: hidden;
+  padding-bottom: 64px; /* space for bar */
+}
+#mobile-action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.08);
+  padding: 10px 12px;
+  display: none;
+  z-index: 1600;
+}
+
+/* Category pills (desktop only) */
+.category-pills {
+  display: none;
+  max-width: 1100px;
+  margin: 6px auto 0;
+  padding: 0 16px;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.category-pills .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    transform 0.12s ease, box-shadow 0.2s ease;
+}
+.category-pills .pill:hover {
+  background: rgba(0, 119, 182, 0.08);
+  border-color: rgba(0, 119, 182, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 119, 182, 0.12);
+}
+.category-pills .pill.active {
+  background: rgba(0, 119, 182, 0.12);
+  border-color: rgba(0, 119, 182, 0.35);
+  /* color: var(--brand-600); */
+  font-weight: 600;
+}
+@media (min-width: 992px) {
+  .category-pills {
+    display: flex;
+  }
+  .toolbar-left {
+    display: none;
+  }
+}
+#mobile-action-bar[aria-hidden="false"] {
+  display: block;
+}
+#mobile-action-bar .bar-inner {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+@media (min-width: 901px) {
+  #mobile-action-bar .bar-inner {
+    justify-content: flex-end;
+    padding-right: 16px;
+  }
+}
