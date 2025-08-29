@@ -602,6 +602,9 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+#current-location-btn {
+  color: var(--text);
+}
 
 /* Reveal animation */
 .reveal {
