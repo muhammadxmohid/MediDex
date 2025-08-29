@@ -501,19 +501,29 @@ function closeCheckout() {
   if (m) m.setAttribute("aria-hidden", "true");
 }
 
-// Create order
+// Create order with duplicate prevention
+let orderSubmissionInProgress = false;
 async function apiCreateOrder(payload) {
-  const resp = await fetch(`${API_BASE}/api/orders`, {
-    method: "POST",
-    mode: "cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => "");
-    throw new Error(`API ${resp.status}: ${text || "Unknown error"}`);
+  if (orderSubmissionInProgress) {
+    throw new Error("Order already being processed");
   }
-  return resp.json();
+
+  orderSubmissionInProgress = true;
+  try {
+    const resp = await fetch(`${API_BASE}/api/orders`, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      throw new Error(`API ${resp.status}: ${text || "Unknown error"}`);
+    }
+    return await resp.json();
+  } finally {
+    orderSubmissionInProgress = false;
+  }
 }
 
 function setupCartUI() {
@@ -539,6 +549,11 @@ function setupCartUI() {
   if (form) {
     form.onsubmit = async (e) => {
       e.preventDefault();
+
+      if (orderSubmissionInProgress) {
+        return;
+      }
+
       const data = Object.fromEntries(new FormData(form).entries());
       const customer = {
         name: String(data.name || "").trim(),
@@ -567,20 +582,29 @@ function setupCartUI() {
 
       const submitBtn = form.querySelector('button[type="submit"]');
       const original = submitBtn ? submitBtn.textContent : "";
-      if (submitBtn) submitBtn.textContent = "Processing...";
+      if (submitBtn) {
+        submitBtn.textContent = "Processing...";
+        submitBtn.disabled = true;
+      }
       try {
         const { order } = await apiCreateOrder(payload);
         cart.items = [];
         saveCart();
         updateCartBadge();
         renderCart?.();
-        if (submitBtn) submitBtn.textContent = original;
+        if (submitBtn) {
+          submitBtn.textContent = original;
+          submitBtn.disabled = false;
+        }
         alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
         closeCheckout?.();
         closeCart?.();
         window.location.href = "cart.html";
       } catch (err) {
-        if (submitBtn) submitBtn.textContent = original;
+        if (submitBtn) {
+          submitBtn.textContent = original;
+          submitBtn.disabled = false;
+        }
         console.error("Checkout failed:", err);
         alert(`Checkout failed: ${err.message}`);
       }
@@ -619,8 +643,23 @@ function onCartPageLoad() {
   const host = document.getElementById("cart-page-items");
   const totalEl = document.getElementById("cart-page-total");
   if (!host || !totalEl) return;
+
   function renderCartPage() {
     host.innerHTML = "";
+
+    if (cart.items.length === 0) {
+      host.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--muted);">
+          <i class="fas fa-shopping-cart" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+          <h3>Your cart is empty</h3>
+          <p style="margin-bottom: 16px;">Add some medicines to get started</p>
+          <a href="medicines.html" class="btn primary" style="margin-top: 16px;">Browse Medicines</a>
+        </div>
+      `;
+      totalEl.textContent = `$0.00`;
+      return;
+    }
+
     cart.items.forEach((it) => {
       const med = findMed(it.id);
       if (!med) return;
@@ -631,7 +670,7 @@ function onCartPageLoad() {
         <img src="${med.image}" alt="${med.name}">
         <div>
           <div class="cart-item-title">${med.name}</div>
-          <div class="cart-item-meta">${med.category} · $${med.price.toFixed(
+          <div class="cart-item-meta">${med.category} · ${med.price.toFixed(
         2
       )}</div>
           <div class="cart-qty">
@@ -641,7 +680,7 @@ function onCartPageLoad() {
             <button class="icon-btn remove" style="margin-left:8px">Remove</button>
           </div>
         </div>
-        <div>$${(med.price * it.qty).toFixed(2)}</div>`;
+        <div>${(med.price * it.qty).toFixed(2)}</div>`;
       row.querySelector(".dec").onclick = () => {
         setQty(it.id, it.qty - 1);
         renderCartPage();
@@ -656,46 +695,114 @@ function onCartPageLoad() {
       };
       host.appendChild(row);
     });
-    totalEl.textContent = `$${cartTotal().toFixed(2)}`;
+    totalEl.textContent = `${cartTotal().toFixed(2)}`;
     updateCartBadge();
     setupRevealObserver();
     markRevealsNow();
   }
   renderCartPage();
 
+  // Enhanced form submission with duplicate prevention and new fields
   const form = document.getElementById("cart-checkout-form");
   if (form) {
+    let isFormSubmitting = false;
+
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      const items = cart.items.map((it) => {
-        const med = findMed(it.id);
-        return {
-          id: it.id,
-          name: med?.name || `Medicine #${it.id}`,
-          price: Number(med?.price || 0),
-          qty: it.qty,
-        };
-      });
+
+      if (isFormSubmitting) {
+        return;
+      }
+
+      if (cart.items.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      isFormSubmitting = true;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Processing...";
+      submitBtn.disabled = true;
+
       try {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Validate required fields
+        if (!data.name || !data.phone || !data.location || !data.cnic) {
+          alert("Please fill in all required fields.");
+          return;
+        }
+
+        // Validate CNIC
+        const cnic = data.cnic.replace(/[^0-9]/g, "");
+        if (cnic.length !== 13) {
+          alert("CNIC must be exactly 13 digits");
+          return;
+        }
+
+        const items = cart.items.map((it) => {
+          const med = findMed(it.id);
+          return {
+            id: it.id,
+            name: med?.name || `Medicine #${it.id}`,
+            price: Number(med?.price || 0),
+            qty: it.qty,
+          };
+        });
+
+        const orderData = {
+          customer: {
+            name: data.name,
+            phone: data.phone,
+            location: data.location,
+            cnic: cnic,
+            doctorRecommended: data.doctorRecommended || "no",
+          },
+          items,
+        };
+
+        // Handle file upload if present
+        const fileInput = form.querySelector('input[name="prescriptionFile"]');
+        if (fileInput && fileInput.files[0]) {
+          const file = fileInput.files[0];
+          if (file.size > 10 * 1024 * 1024) {
+            alert("File size must be less than 10MB");
+            return;
+          }
+
+          // Convert to base64
+          const reader = new FileReader();
+          const fileData = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+
+          orderData.customer.prescriptionFile = fileData;
+          orderData.customer.prescriptionFileName = file.name;
+        }
+
+        // Handle map location if available
+        if (window.selectedLocation) {
+          orderData.customer.mapLocation = JSON.stringify(
+            window.selectedLocation
+          );
+        }
+
         const resp = await fetch(`${API_BASE}/api/orders`, {
           method: "POST",
           mode: "cors",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer: {
-              name: data.name,
-              phone: data.phone,
-              location: data.location,
-              doctorRecommended: data.doctorRecommended || "no",
-            },
-            items,
-          }),
+          body: JSON.stringify(orderData),
         });
+
         if (!resp.ok) {
           const t = await resp.text().catch(() => "");
           throw new Error(t || `HTTP ${resp.status}`);
         }
+
         const { order } = await resp.json();
         alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
         cart.items = [];
@@ -705,6 +812,10 @@ function onCartPageLoad() {
       } catch (err) {
         alert(`Checkout failed: ${err?.message || "Unknown error"}`);
         console.error("Checkout error:", err);
+      } finally {
+        isFormSubmitting = false;
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
       }
     };
   }

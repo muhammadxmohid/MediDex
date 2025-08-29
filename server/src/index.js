@@ -1,145 +1,182 @@
-import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = Number(process.env.PORT || 3001);
-const OWNER_KEY = process.env.OWNER_KEY || "";
 
-// normalize origins like https://host/path -> https://host
-function normalizeOrigin(value) {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    return `${url.protocol}//${url.host}`;
-  } catch {
-    return value.replace(/\/+$/, "");
-  }
-}
-const allowedOrigins = (process.env.CORS_ORIGIN || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean)
-  .map(normalizeOrigin)
-  .filter(Boolean);
+app.use(cors());
+app.use(express.json({ limit: "50mb" })); // Increase limit for file uploads
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-const corsOptions = {
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
-    const normalized = normalizeOrigin(origin);
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(normalized)) {
-      return cb(null, true);
-    }
-    return cb(new Error("CORS not allowed"), false);
-  },
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Accept", "Origin"],
-  optionsSuccessStatus: 204,
-  maxAge: 86400,
-};
+const PORT = process.env.PORT || 3001;
+const OWNER_KEY = process.env.OWNER_KEY || "admin123";
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-app.use(express.json());
-
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
-
-// Owner-only: list recent orders
-app.get("/api/orders", async (req, res) => {
-  try {
-    if (!OWNER_KEY)
-      return res.status(501).json({ error: "OWNER_KEY not configured" });
-    if ((req.query.key || "") !== OWNER_KEY)
-      return res.status(401).json({ error: "Unauthorized" });
-
-    const orders = await prisma.order.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      include: { items: true },
-    });
-
-    res.json({ ok: true, orders });
-  } catch (err) {
-    res.status(500).json({ error: "Server error fetching orders" });
-  }
+// Health check
+app.get("/", (req, res) => {
+  res.json({ status: "MediDex API is running" });
 });
 
 // Create order
 app.post("/api/orders", async (req, res) => {
   try {
-    const { customer, items } = req.body || {};
-    if (!customer || !Array.isArray(items) || items.length === 0) {
+    const { customer, items } = req.body;
+
+    if (!customer || !items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Invalid order data" });
+    }
+
+    const {
+      name,
+      phone,
+      location,
+      cnic,
+      prescriptionFile,
+      prescriptionFileName,
+      mapLocation,
+      doctorRecommended,
+    } = customer;
+
+    if (!name || !phone || !location) {
       return res
         .status(400)
-        .json({ error: "Invalid payload: missing customer or items" });
-    }
-    const { name, phone, location, doctorRecommended } = customer || {};
-    if (!name || !phone || !location) {
-      return res.status(400).json({ error: "Missing name/phone/location" });
+        .json({ error: "Name, phone, and location are required" });
     }
 
-    // accept either {id, qty} or {productId, quantity}
-    const normalizedItems = items.map((it) => {
-      const medId = Number(it.productId ?? it.id);
-      const qty = Number(it.quantity ?? it.qty);
-      const priceNum = Number(it.price);
-      const nameStr = String(it.name || "");
-      if (!medId || !qty || !Number.isFinite(priceNum) || !nameStr) {
-        throw new Error(
-          "Each item must include productId/id, name, price (number), quantity/qty"
-        );
-      }
-      return {
-        medId,
-        name: nameStr,
-        price: new Prisma.Decimal(priceNum.toFixed(2)),
-        qty,
-      };
-    });
+    // Validate CNIC if provided
+    if (cnic && cnic.replace(/[^0-9]/g, "").length !== 13) {
+      return res.status(400).json({ error: "CNIC must be exactly 13 digits" });
+    }
 
-    const totalNum = normalizedItems.reduce(
-      (sum, it) => sum + Number(it.price) * it.qty,
+    const total = items.reduce(
+      (sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 1),
       0
     );
-    const total = new Prisma.Decimal(totalNum.toFixed(2));
 
     const order = await prisma.order.create({
       data: {
-        name,
-        phone,
-        location,
-        doctorRecommended:
-          String(doctorRecommended).toLowerCase() === "yes" ||
-          doctorRecommended === true,
-        total,
-        items: { create: normalizedItems },
+        name: name.trim(),
+        phone: phone.trim(),
+        location: location.trim(),
+        cnic: cnic ? cnic.replace(/[^0-9]/g, "") : null,
+        prescriptionFile: prescriptionFile || null,
+        prescriptionFileName: prescriptionFileName || null,
+        mapLocation: mapLocation || null,
+        doctorRecommended: doctorRecommended === "yes",
+        total: Number(total.toFixed(2)),
+        items: {
+          create: items.map((item) => ({
+            medId: Number(item.id) || null,
+            name: String(item.name || "Unknown Medicine").trim(),
+            price: Number(item.price || 0),
+            qty: Math.max(1, Number(item.qty) || 1),
+          })),
+        },
       },
-      include: { items: true },
+      include: {
+        items: true,
+      },
     });
 
-    return res.status(201).json({ ok: true, order });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ error: err?.message || "Server error while creating order" });
+    res.json({
+      success: true,
+      order: {
+        id: order.id,
+        createdAt: order.createdAt.toISOString(),
+        total: Number(order.total),
+      },
+    });
+  } catch (error) {
+    console.error("Create order error:", error);
+    res.status(500).json({
+      error: "Failed to create order",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 });
 
-app.get("/api/orders/:id", async (req, res) => {
+// Get orders (owner only)
+app.get("/api/orders", async (req, res) => {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: req.params.id },
-      include: { items: true },
+    const { key } = req.query;
+
+    if (key !== OWNER_KEY) {
+      return res.status(401).json({ error: "Invalid access key" });
+    }
+
+    const orders = await prisma.order.findMany({
+      include: {
+        items: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
-    if (!order) return res.status(404).json({ error: "Not found" });
-    res.json(order);
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
+
+    const ordersWithFiles = orders.map((order) => ({
+      ...order,
+      total: Number(order.total),
+      items: order.items.map((item) => ({
+        ...item,
+        price: Number(item.price),
+      })),
+    }));
+
+    res.json({ orders: ordersWithFiles });
+  } catch (error) {
+    console.error("Get orders error:", error);
+    res.status(500).json({
+      error: "Failed to fetch orders",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT}`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+  res.status(500).json({
+    error: "Internal server error",
+    details: process.env.NODE_ENV === "development" ? err.message : undefined,
+  });
 });
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Endpoint not found" });
+});
+
+const startServer = async () => {
+  try {
+    await prisma.$connect();
+    console.log("✓ Database connected");
+
+    app.listen(PORT, () => {
+      console.log(`✓ Server running on port ${PORT}`);
+      console.log(`✓ Environment: ${process.env.NODE_ENV || "development"}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("Shutting down gracefully...");
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("Shutting down gracefully...");
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+startServer();
