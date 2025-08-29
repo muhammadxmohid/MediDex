@@ -335,6 +335,9 @@ nav a:hover {
   background: var(--brand);
   color: #fff;
   border-color: var(--brand);
+  /* position: absolute;
+  top: auto;
+  right: auto; */
 }
 .btn:hover {
   filter: brightness(0.97);

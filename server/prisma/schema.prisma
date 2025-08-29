@@ -15,6 +15,9 @@ model Order {
   name              String
   phone             String
   location          String
+  cnic              String?     // New field for CNIC number
+  prescriptionFile  String?     // New field for prescription file
+  mapLocation       String?     // New field for map coordinates/address
   doctorRecommended Boolean     @default(false)
   total             Decimal     @db.Decimal(10, 2)
   items             OrderItem[]

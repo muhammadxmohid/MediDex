@@ -9,6 +9,71 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+    />
+    <style>
+      .file-upload-container {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        background: var(--surface-2);
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .file-upload-container:hover {
+        border-color: var(--primary);
+      }
+      .file-upload-container.has-file {
+        border-color: var(--primary);
+        background: var(--primary-light, var(--surface-2));
+      }
+      .file-instructions {
+        font-size: 0.875rem;
+        color: var(--muted);
+        margin-top: 8px;
+        text-align: left;
+      }
+      .file-instructions ul {
+        margin: 4px 0 0 20px;
+        padding: 0;
+      }
+      .map-container {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        height: 200px;
+        margin: 8px 0;
+        background: var(--surface-2);
+      }
+      .map-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .map-controls button {
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+      .map-controls button:hover {
+        background: var(--surface-2);
+      }
+      .map-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .map-toggle input[type="checkbox"] {
+        margin: 0;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -63,7 +128,6 @@
           class="cart-items"
           aria-live="polite"
         ></section>
-
         <aside style="position: sticky; top: 12px; display: grid; gap: 12px">
           <div
             class="cart-drawer"
@@ -82,7 +146,6 @@
               </div>
             </div>
           </div>
-
           <form
             id="cart-checkout-form"
             class="modal-body"
@@ -106,8 +169,78 @@
                 required
               />
             </label>
-            <label
-              >Address<textarea name="location" rows="2" required></textarea>
+            <label>
+              CNIC Number
+              <small style="color: var(--muted)"
+                >(enter CNIC without dashes)</small
+              >
+              <input
+                name="cnic"
+                type="text"
+                inputmode="numeric"
+                minlength="13"
+                maxlength="13"
+                placeholder="e.g. 1234567890123"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,13)"
+                required
+              />
+            </label>
+            <label>
+              Prescription/Document Upload
+              <div class="file-upload-container" id="file-upload">
+                <i
+                  class="fas fa-cloud-upload-alt"
+                  style="
+                    font-size: 24px;
+                    color: var(--muted);
+                    margin-bottom: 8px;
+                  "
+                ></i>
+                <div>Click to upload prescription or medical document</div>
+                <div
+                  style="
+                    font-size: 0.875rem;
+                    color: var(--muted);
+                    margin-top: 4px;
+                  "
+                >
+                  PDF, JPG, PNG files accepted
+                </div>
+                <input
+                  type="file"
+                  name="prescriptionFile"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  style="display: none"
+                />
+              </div>
+              <div class="file-instructions">
+                <strong>Important Instructions:</strong>
+                <ul>
+                  <li>Avoid blurry images - ensure clear, readable text</li>
+                  <li>Do not crop prescription - include full document</li>
+                  <li>
+                    File must include: doctor details, clinic name, visit date,
+                    and patient information
+                  </li>
+                  <li>Maximum file size: 10MB</li>
+                </ul>
+              </div>
+            </label>
+            <label>
+              Address
+              <div class="map-toggle">
+                <input type="checkbox" id="use-map-address" />
+                <label for="use-map-address">Use map to select address</label>
+              </div>
+              <div id="map-section" style="display: none">
+                <div class="map-controls">
+                  <button type="button" id="current-location-btn">
+                    <i class="fas fa-location-arrow"></i> Use Current Location
+                  </button>
+                </div>
+                <div class="map-container" id="map-container"></div>
+              </div>
+              <textarea name="location" rows="2" required></textarea>
             </label>
             <label
               >Payment method
@@ -117,7 +250,9 @@
             </label>
             <div class="modal-actions">
               <a class="btn" href="medicines.html">Continue shopping</a>
-              <button type="submit" class="btn primary">Place order</button>
+              <button type="submit" class="btn primary" id="place-order-btn">
+                Place order
+              </button>
             </div>
           </form>
         </aside>
@@ -126,11 +261,298 @@
 
     <footer><p>&copy; 2025 MediDex. All rights reserved.</p></footer>
 
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
     <script src="js/script.js"></script>
     <script>
+      let map,
+        marker,
+        selectedLocation = null;
+      let isSubmitting = false; // Prevent multiple submissions
+
+      function initMap() {
+        // Default location (Lahore, Pakistan)
+        const defaultLocation = [31.5804, 74.3587];
+
+        map = L.map("map-container").setView(defaultLocation, 13);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+
+        marker = L.marker(defaultLocation, {
+          draggable: true,
+        }).addTo(map);
+
+        // Handle map clicks
+        map.on("click", (e) => {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          updateLocation(lat, lng);
+        });
+
+        // Handle marker drag
+        marker.on("dragend", () => {
+          const pos = marker.getLatLng();
+          updateLocation(pos.lat, pos.lng);
+        });
+      }
+
+      async function updateLocation(lat, lng) {
+        selectedLocation = { lat, lng };
+        marker.setLatLng([lat, lng]);
+
+        // Reverse geocoding using Nominatim (free)
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+          );
+          const data = await response.json();
+
+          if (data && data.display_name) {
+            const addressTextarea = document.querySelector(
+              'textarea[name="location"]'
+            );
+            if (addressTextarea) {
+              addressTextarea.value = data.display_name;
+            }
+          }
+        } catch (error) {
+          console.error("Error getting address:", error);
+        }
+      }
+
+      function getCurrentLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+              map.setView([lat, lng], 15);
+              updateLocation(lat, lng);
+            },
+            (error) => {
+              console.error("Error getting location:", error);
+              alert(
+                "Could not get your current location. Please select manually on the map."
+              );
+            }
+          );
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         if (typeof onCartPageLoad === "function") onCartPageLoad();
+
+        // File upload handling
+        const fileUploadContainer = document.getElementById("file-upload");
+        const fileInput =
+          fileUploadContainer.querySelector('input[type="file"]');
+
+        fileUploadContainer.addEventListener("click", () => {
+          fileInput.click();
+        });
+
+        fileInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+              // 10MB limit
+              alert("File size must be less than 10MB");
+              fileInput.value = "";
+              return;
+            }
+            fileUploadContainer.classList.add("has-file");
+            fileUploadContainer.innerHTML = `
+              <i class="fas fa-file-check" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+              <div style="font-weight: 600;">${file.name}</div>
+              <div style="font-size: 0.875rem; color: var(--muted);">
+                ${(file.size / 1024 / 1024).toFixed(2)} MB
+              </div>
+              <button type="button" onclick="clearFile()" style="margin-top: 8px; padding: 4px 8px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; cursor: pointer;">
+                Remove file
+              </button>
+            `;
+          }
+        });
+
+        // Map toggle functionality
+        const mapToggle = document.getElementById("use-map-address");
+        const mapSection = document.getElementById("map-section");
+
+        mapToggle.addEventListener("change", (e) => {
+          if (e.target.checked) {
+            mapSection.style.display = "block";
+            // Initialize map when first shown
+            setTimeout(() => {
+              if (!map) {
+                initMap();
+              } else {
+                map.invalidateSize(); // Refresh map if already initialized
+              }
+            }, 100);
+          } else {
+            mapSection.style.display = "none";
+          }
+        });
+
+        // Current location button
+        document
+          .getElementById("current-location-btn")
+          .addEventListener("click", getCurrentLocation);
+
+        // Form submission with duplicate prevention
+        const form = document.getElementById("cart-checkout-form");
+        const submitBtn = document.getElementById("place-order-btn");
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          // Prevent multiple submissions
+          if (isSubmitting) {
+            return;
+          }
+
+          isSubmitting = true;
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Processing...";
+
+          try {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validate CNIC
+            const cnic = data.cnic.replace(/[^0-9]/g, "");
+            if (cnic.length !== 13) {
+              alert("CNIC must be exactly 13 digits");
+              return;
+            }
+
+            const items = cart.items.map((it) => {
+              const med = findMed(it.id);
+              return {
+                id: it.id,
+                name: med?.name || `Medicine #${it.id}`,
+                price: Number(med?.price || 0),
+                qty: it.qty,
+              };
+            });
+
+            const orderData = {
+              customer: {
+                name: data.name,
+                phone: data.phone,
+                location: data.location,
+                cnic: cnic,
+                mapLocation: selectedLocation
+                  ? JSON.stringify(selectedLocation)
+                  : null,
+                doctorRecommended: data.doctorRecommended || "no",
+              },
+              items,
+            };
+
+            // Handle file upload
+            if (data.prescriptionFile && data.prescriptionFile.size > 0) {
+              // Convert file to base64
+              const file = data.prescriptionFile;
+              const reader = new FileReader();
+              reader.onload = async function (e) {
+                orderData.customer.prescriptionFile = e.target.result;
+                orderData.customer.prescriptionFileName = file.name;
+                await submitOrder(orderData);
+              };
+              reader.readAsDataURL(file);
+            } else {
+              await submitOrder(orderData);
+            }
+          } catch (err) {
+            console.error("Form processing error:", err);
+            alert(
+              "An error occurred while processing your order. Please try again."
+            );
+          } finally {
+            isSubmitting = false;
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Place order";
+          }
+        });
       });
+
+      async function submitOrder(orderData) {
+        try {
+          const resp = await fetch(`${API_BASE}/api/orders`, {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData),
+          });
+
+          if (!resp.ok) {
+            const t = await resp.text().catch(() => "");
+            throw new Error(t || `HTTP ${resp.status}`);
+          }
+
+          const { order } = await resp.json();
+          alert(`Thank you! Order placed.\nOrder ID: ${order.id}`);
+          cart.items = [];
+          saveCart();
+          window.location.href = "index.html";
+        } catch (err) {
+          alert(`Checkout failed: ${err?.message || "Unknown error"}`);
+          console.error("Checkout error:", err);
+          throw err;
+        }
+      }
+
+      function clearFile() {
+        const fileInput = document.querySelector(
+          'input[name="prescriptionFile"]'
+        );
+        const container = document.getElementById("file-upload");
+
+        fileInput.value = "";
+        container.classList.remove("has-file");
+        container.innerHTML = `
+          <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: var(--muted); margin-bottom: 8px;"></i>
+          <div>Click to upload prescription or medical document</div>
+          <div style="font-size: 0.875rem; color: var(--muted); margin-top: 4px;">
+            PDF, JPG, PNG files accepted
+          </div>
+          <input type="file" name="prescriptionFile" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" />
+        `;
+
+        // Re-attach event listener
+        const newFileInput = container.querySelector('input[type="file"]');
+        newFileInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+              alert("File size must be less than 10MB");
+              newFileInput.value = "";
+              return;
+            }
+            container.classList.add("has-file");
+            container.innerHTML = `
+              <i class="fas fa-file-check" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+              <div style="font-weight: 600;">${file.name}</div>
+              <div style="font-size: 0.875rem; color: var(--muted);">
+                ${(file.size / 1024 / 1024).toFixed(2)} MB
+              </div>
+              <button type="button" onclick="clearFile()" style="margin-top: 8px; padding: 4px 8px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; cursor: pointer;">
+                Remove file
+              </button>
+            `;
+          }
+        });
+      }
+
+      // Make clearFile available globally
+      window.clearFile = clearFile;
     </script>
   </body>
 </html>
