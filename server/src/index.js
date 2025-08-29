@@ -35,7 +35,6 @@ app.post("/api/orders", async (req, res) => {
       location,
       cnic,
       prescriptionFile,
-      prescriptionFileName,
       mapLocation,
       doctorRecommended,
     } = customer;
