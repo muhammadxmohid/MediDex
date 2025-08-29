@@ -62,7 +62,6 @@ app.post("/api/orders", async (req, res) => {
         location: location.trim(),
         cnic: cnic ? cnic.replace(/[^0-9]/g, "") : null,
         prescriptionFile: prescriptionFile || null,
-        prescriptionFileName: prescriptionFileName || null,
         mapLocation: mapLocation || null,
         doctorRecommended: doctorRecommended === "yes",
         total: Number(total.toFixed(2)),
