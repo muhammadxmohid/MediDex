@@ -73,6 +73,24 @@
       .map-toggle input[type="checkbox"] {
         margin: 0;
       }
+      @media (min-width: 768px) {
+        .map-container {
+          height: 400px; /* Larger on desktop */
+          width: 550px;
+          border: 2px solid var(--primary); /* Different border */
+          border-radius: 12px; /* More rounded corners */
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Add shadow */
+          position: absolute;
+          top: 480px;
+          left: -558px;
+        }
+
+        .map-controls button {
+          padding: 8px 16px; /* Bigger buttons on desktop */
+          font-size: 1rem; /* Larger text */
+          font-weight: 600; /* Bold text */
+        }
+      }
     </style>
   </head>
   <body>
