@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -14,6 +15,63 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const PORT = process.env.PORT || 3001;
 const OWNER_KEY = process.env.OWNER_KEY || "admin123";
+
+// Email configuration
+const transporter = nodemailer.createTransporter({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // App password, not regular password
+  }
+});
+
+// Function to send order notification email
+async function sendOrderNotification(order) {
+  if (!process.env.EMAIL_USER || !process.env.OWNER_EMAIL) {
+    console.log("Email not configured, skipping notification");
+    return;
+  }
+
+  try {
+    const itemsList = order.items.map(item => 
+      `${item.name} - Qty: ${item.qty} - ${Number(item.price).toFixed(2)}`
+    ).join('\n');
+
+    const emailHTML = `
+      <h2>New Order Received - MediDex</h2>
+      <p><strong>Order ID:</strong> ${order.id}</p>
+      <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+      
+      <h3>Customer Details:</h3>
+      <p><strong>Name:</strong> ${order.name}</p>
+      <p><strong>Phone:</strong> ${order.phone}</p>
+      <p><strong>CNIC:</strong> ${order.cnic || 'Not provided'}</p>
+      <p><strong>Address:</strong> ${order.location}</p>
+      
+      <h3>Items Ordered:</h3>
+      <pre>${itemsList}</pre>
+      
+      <p><strong>Total Amount:</strong> ${Number(order.total).toFixed(2)}</p>
+      
+      ${order.prescriptionFile ? '<p><strong>Note:</strong> Customer uploaded prescription file</p>' : ''}
+      ${order.mapLocation ? '<p><strong>Note:</strong> Customer selected delivery location on map</p>' : ''}
+      
+      <p>Login to your orders panel to view full details and manage this order.</p>
+    `;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.OWNER_EMAIL,
+      subject: `New Order #${order.id} - MediDex`,
+      html: emailHTML
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Order notification email sent for order ${order.id}`);
+  } catch (error) {
+    console.error("Failed to send email notification:", error);
+  }
+}
 
 // Health check
 app.get("/", (req, res) => {
@@ -83,6 +141,11 @@ app.post("/api/orders", async (req, res) => {
         items: true
       }
     });
+
+    // Send email notification to owner (don't await to avoid blocking response)
+    sendOrderNotification(order).catch(err => 
+      console.error("Email notification failed:", err)
+    );
 
     res.json({
       success: true,
