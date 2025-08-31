@@ -15,18 +15,9 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 const PORT = process.env.PORT || 3001;
 const OWNER_KEY = process.env.OWNER_KEY || "admin123";
 
-// Email configuration
-const transporter = nodemailer.createTransporter({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // App password, not regular password
-  },
-});
-
-// Function to send order notification email
+// Function to send order notification email using Resend API
 async function sendOrderNotification(order) {
-  if (!process.env.EMAIL_USER || !process.env.OWNER_EMAIL) {
+  if (!process.env.RESEND_API_KEY || !process.env.OWNER_EMAIL) {
     console.log("Email not configured, skipping notification");
     return;
   }
@@ -35,7 +26,7 @@ async function sendOrderNotification(order) {
     const itemsList = order.items
       .map(
         (item) =>
-          `${item.name} - Qty: ${item.qty} - ${Number(item.price).toFixed(2)}`
+          `${item.name} - Qty: ${item.qty} - $${Number(item.price).toFixed(2)}`
       )
       .join("\n");
 
@@ -55,7 +46,7 @@ async function sendOrderNotification(order) {
       <h3>Items Ordered:</h3>
       <pre>${itemsList}</pre>
       
-      <p><strong>Total Amount:</strong> ${Number(order.total).toFixed(2)}</p>
+      <p><strong>Total Amount:</strong> $${Number(order.total).toFixed(2)}</p>
       
       ${
         order.prescriptionFile
@@ -71,14 +62,25 @@ async function sendOrderNotification(order) {
       <p>Login to your orders panel to view full details and manage this order.</p>
     `;
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.OWNER_EMAIL,
-      subject: `New Order #${order.id} - MediDex`,
-      html: emailHTML,
-    };
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "MediDex <orders@resend.dev>",
+        to: [process.env.OWNER_EMAIL],
+        subject: `New Order #${order.id} - MediDex`,
+        html: emailHTML,
+      }),
+    });
 
-    await transporter.sendMail(mailOptions);
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Resend API error: ${response.status} - ${errorData}`);
+    }
+
     console.log(`Order notification email sent for order ${order.id}`);
   } catch (error) {
     console.error("Failed to send email notification:", error);
@@ -148,7 +150,8 @@ app.post("/api/orders", async (req, res) => {
     if (cnic) orderData.cnic = cnic.replace(/[^0-9]/g, "");
     if (prescriptionFile) {
       orderData.prescriptionFile = prescriptionFile;
-      orderData.prescriptionFileName = prescriptionFileName;
+      if (prescriptionFileName)
+        orderData.prescriptionFileName = prescriptionFileName;
     }
     if (mapLocation) orderData.mapLocation = mapLocation;
 
@@ -217,6 +220,41 @@ app.get("/api/orders", async (req, res) => {
       details:
         process.env.NODE_ENV === "development" ? error.message : undefined,
     });
+  }
+});
+
+// Test email endpoint
+app.get("/api/test-email", async (req, res) => {
+  try {
+    if (!process.env.RESEND_API_KEY || !process.env.OWNER_EMAIL) {
+      return res.status(400).json({ error: "Email not configured" });
+    }
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "MediDex <orders@resend.dev>",
+        to: [process.env.OWNER_EMAIL],
+        subject: "MediDex Email Test",
+        html: "<h2>Email configuration is working!</h2><p>This is a test email from your MediDex server.</p>",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Resend API error: ${response.status} - ${errorData}`);
+    }
+
+    res.json({ success: true, message: "Test email sent successfully" });
+  } catch (error) {
+    console.error("Test email failed:", error);
+    res
+      .status(500)
+      .json({ error: "Email test failed", details: error.message });
   }
 });
 
