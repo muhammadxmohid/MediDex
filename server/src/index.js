@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -17,7 +16,7 @@ const PORT = process.env.PORT || 3001;
 const OWNER_KEY = process.env.OWNER_KEY || "admin123";
 
 // Email configuration
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
