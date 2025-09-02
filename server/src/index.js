@@ -59,13 +59,7 @@ async function sendOrderNotification(order) {
           : ""
       }
       
-      <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
-        <p><strong>Manage this order:</strong></p>
-        <a href="https://muhammadxmohid.github.io/MediDex/orders.html" 
-           style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          View Orders Dashboard
-        </a>
-      </div>
+     <p><strong>Manage this order at:</strong> <a href="https://muhammadxmohid.github.io/MediDex/orders.html">Here</a></p>
     `;
 
     const response = await fetch("https://api.resend.com/emails", {
