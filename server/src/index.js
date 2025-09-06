@@ -500,37 +500,256 @@ app.get("/api/admin/medicines", authenticateToken, async (req, res) => {
   }
 });
 
-// Toggle medicine stock
-app.put(
-  "/api/admin/medicines/:id/toggle-stock",
-  authenticateToken,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      const medicine = await prisma.medicine.findUnique({
-        where: { id: parseInt(id) },
-      });
-
-      if (!medicine) {
-        return res.status(404).json({ error: "Medicine not found" });
-      }
-
-      const updatedMedicine = await prisma.medicine.update({
-        where: { id: parseInt(id) },
-        data: {
-          inStock: !medicine.inStock,
-          updatedAt: new Date(),
-        },
-      });
-
-      res.json({ success: true, medicine: updatedMedicine });
-    } catch (error) {
-      console.error("Toggle medicine stock error:", error);
-      res.status(500).json({ error: "Failed to update medicine stock" });
+// Create medicine
+app.post("/api/admin/medicines", authenticateToken, async (req, res) => {
+  try {
+    // Only admins and managers can add medicines
+    if (!["ADMIN", "MANAGER"].includes(req.user.role)) {
+      return res.status(403).json({ error: "Insufficient permissions" });
     }
+
+    const { name, category, price, stockCount, description, image } = req.body;
+
+    if (!name || !category || !price || !stockCount || !description) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Use default image if none provided
+    const imageUrl =
+      image || `images/${name.toLowerCase().replace(/\s+/g, "_")}.png`;
+
+    const medicine = await prisma.medicine.create({
+      data: {
+        name: name.trim(),
+        category,
+        price: Number(price),
+        stockCount: Number(stockCount),
+        description: description.trim(),
+        image: imageUrl,
+        inStock: Number(stockCount) > 0,
+      },
+    });
+
+    res.json({ success: true, medicine });
+  } catch (error) {
+    console.error("Create medicine error:", error);
+    res.status(500).json({ error: "Failed to create medicine" });
   }
-);
+});
+
+// Update medicine
+app.put("/api/admin/medicines/:id", authenticateToken, async (req, res) => {
+  try {
+    if (!["ADMIN", "MANAGER"].includes(req.user.role)) {
+      return res.status(403).json({ error: "Insufficient permissions" });
+    }
+
+    const { id } = req.params;
+    const { name, category, price, stockCount, description, image } = req.body;
+
+    const updateData = {
+      name: name.trim(),
+      category,
+      price: Number(price),
+      stockCount: Number(stockCount),
+      description: description.trim(),
+      inStock: Number(stockCount) > 0,
+      updatedAt: new Date(),
+    };
+
+    if (image) {
+      updateData.image = image;
+    }
+
+    const medicine = await prisma.medicine.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+    });
+
+    res.json({ success: true, medicine });
+  } catch (error) {
+    console.error("Update medicine error:", error);
+    res.status(500).json({ error: "Failed to update medicine" });
+  }
+});
+
+// Delete medicine
+app.delete("/api/admin/medicines/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res
+        .status(403)
+        .json({ error: "Only admins can delete medicines" });
+    }
+
+    const { id } = req.params;
+    await prisma.medicine.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete medicine error:", error);
+    res.status(500).json({ error: "Failed to delete medicine" });
+  }
+});
+
+// Staff login endpoint
+app.post("/api/admin/staff-login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email.toLowerCase(),
+        isActive: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // For demo purposes, we'll use simple password check
+    // In production, you'd use bcrypt.compare(password, user.password)
+    const isValidPassword =
+      password === "demo123" || password === user.email.split("@")[0];
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Staff login error:", error);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// Create user (with password)
+app.post("/api/admin/users", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Only admins can create users" });
+    }
+
+    const { name, email, role, password } = req.body;
+
+    if (!name || !email || !role || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // For demo purposes, store plain password
+    // In production, use: const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: password, // In production: hashedPassword
+        role,
+        createdBy: req.user.id,
+        isActive: true,
+      },
+    });
+
+    // Don't return password in response
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ success: true, user: userWithoutPassword });
+  } catch (error) {
+    console.error("Create user error:", error);
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
+// Update user
+app.put("/api/admin/users/:id", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Only admins can update users" });
+    }
+
+    const { id } = req.params;
+    const { name, email, role } = req.body;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        role,
+        updatedAt: new Date(),
+      },
+    });
+
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// Toggle user status
+app.put("/api/admin/users/:id/toggle", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res
+        .status(403)
+        .json({ error: "Only admins can toggle user status" });
+    }
+
+    const { id } = req.params;
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!currentUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        isActive: !currentUser.isActive,
+        updatedAt: new Date(),
+      },
+    });
+
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error("Toggle user status error:", error);
+    res.status(500).json({ error: "Failed to toggle user status" });
+  }
+});
 
 // Get users
 app.get("/api/admin/users", authenticateToken, async (req, res) => {

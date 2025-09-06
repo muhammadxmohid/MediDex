@@ -776,8 +776,11 @@
 
   // Global functions for inline onclick handlers
   window.updateOrderStatus = updateOrderStatus;
-  window.editMedicine = (id) => showToast(`Edit medicine ${id}`);
+  window.editMedicine = editMedicine;
   window.toggleMedicineStock = toggleMedicineStock;
-  window.editUser = (id) => showToast(`Edit user ${id}`);
-  window.toggleUserStatus = (id) => showToast(`Toggle user ${id} status`);
+  window.editUser = editUser;
+  window.toggleUserStatus = toggleUserStatus;
+  window.closeMedicineModal = closeMedicineModal;
+  window.closeUserModal = closeUserModal;
+  window.closeStaffLoginModal = closeStaffLoginModal;
 })();

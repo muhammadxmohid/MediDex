@@ -229,14 +229,22 @@
           style="max-width: 400px; margin: 40px auto"
         >
           <label
-            >Admin Access Key<input
+            >Access Key or Email
+            <input
               name="key"
-              type="password"
-              placeholder="Enter access key"
+              type="text"
+              placeholder="Enter admin key or staff email"
               required
-          /></label>
+            />
+            <div
+              style="font-size: 0.875rem; color: var(--muted); margin-top: 4px"
+            >
+              • Admin: Use your access key<br />
+              • Staff: Enter your email address
+            </div>
+          </label>
           <div class="modal-actions">
-            <button type="submit" class="btn primary">Login</button>
+            <button type="submit" class="btn primary">Continue</button>
           </div>
         </form>
       </section>

@@ -40,105 +40,126 @@ const API_BASE =
   } catch {}
 })();
 
-// ===== Sample data (unchanged) =====
-const medicines = [
-  {
-    id: 1,
-    name: "Aspirin",
-    category: "Tablet",
-    price: 5.99,
-    description: "Used to reduce pain, fever, or inflammation.",
-    image: "images/aspirin.png",
-  },
-  {
-    id: 2,
-    name: "Benzyl Penicillin",
-    category: "Injection",
-    price: 19.99,
-    description: "Antibiotic used for bacterial infections.",
-    image: "images/benzene.png",
-  },
-  {
-    id: 3,
-    name: "Paracetamol",
-    category: "Tablet",
-    price: 6.49,
-    description: "Pain reliever and fever reducer.",
-    image: "images/paracetamol.png",
-  },
-  {
-    id: 4,
-    name: "Amoxicillin",
-    category: "Capsule",
-    price: 12.49,
-    description: "Antibiotic for a variety of infections.",
-    image: "images/amoxicillin.png",
-  },
-  {
-    id: 5,
-    name: "Ibuprofen",
-    category: "Tablet",
-    price: 7.49,
-    description: "Reduces fever and treats pain or inflammation.",
-    image: "images/ibuprofen.png",
-  },
-  {
-    id: 6,
-    name: "Cetirizine",
-    category: "Tablet",
-    price: 4.99,
-    description: "Antihistamine used to relieve allergy symptoms.",
-    image: "images/cetirizine.png",
-  },
-  {
-    id: 7,
-    name: "Doxycycline",
-    category: "Capsule",
-    price: 14.99,
-    description: "Antibiotic for respiratory infections and more.",
-    image: "images/doxycycline.png",
-  },
-  {
-    id: 8,
-    name: "Metformin",
-    category: "Tablet",
-    price: 8.99,
-    description: "Used to treat type 2 diabetes.",
-    image: "images/metmormin.png",
-  },
-  {
-    id: 9,
-    name: "Loratadine",
-    category: "Tablet",
-    price: 5.49,
-    description: "Antihistamine for seasonal allergies.",
-    image: "images/loratadine.png",
-  },
-  {
-    id: 10,
-    name: "Naproxen",
-    category: "Tablet",
-    price: 9.49,
-    description: "NSAID for pain and inflammation.",
-    image: "images/naproxen.png",
-  },
-  {
-    id: 11,
-    name: "ORS Solution",
-    category: "Solution",
-    price: 3.99,
-    description: "Oral rehydration solution for dehydration.",
-    image: "images/ors.png",
-  },
-  {
-    id: 12,
-    name: "Dextromethorphan Syrup",
-    category: "Syrup",
-    price: 6.99,
-    description: "Cough suppressant for dry cough.",
-    image: "images/dxm.png",
-  },
-];
+// ===== Sample data (loaded from API) =====
+let medicines = [];
+
+// Load medicines from API
+async function loadMedicines() {
+  try {
+    const response = await fetch(`${API_BASE}/api/medicines`);
+    if (response.ok) {
+      const data = await response.json();
+      medicines = data.medicines || [];
+    } else {
+      console.error("Failed to load medicines from API");
+      setFallbackMedicines();
+    }
+  } catch (error) {
+    console.error("Error loading medicines:", error);
+    setFallbackMedicines();
+  }
+}
+
+function setFallbackMedicines() {
+  medicines = [
+    {
+      id: 1,
+      name: "Aspirin",
+      category: "Tablet",
+      price: 5.99,
+      description: "Used to reduce pain, fever, or inflammation.",
+      image: "images/aspirin.png",
+    },
+    {
+      id: 2,
+      name: "Benzyl Penicillin",
+      category: "Injection",
+      price: 19.99,
+      description: "Antibiotic used for bacterial infections.",
+      image: "images/benzene.png",
+    },
+    {
+      id: 3,
+      name: "Paracetamol",
+      category: "Tablet",
+      price: 6.49,
+      description: "Pain reliever and fever reducer.",
+      image: "images/paracetamol.png",
+    },
+    {
+      id: 4,
+      name: "Amoxicillin",
+      category: "Capsule",
+      price: 12.49,
+      description: "Antibiotic for a variety of infections.",
+      image: "images/amoxicillin.png",
+    },
+    {
+      id: 5,
+      name: "Ibuprofen",
+      category: "Tablet",
+      price: 7.49,
+      description: "Reduces fever and treats pain or inflammation.",
+      image: "images/ibuprofen.png",
+    },
+    {
+      id: 6,
+      name: "Cetirizine",
+      category: "Tablet",
+      price: 4.99,
+      description: "Antihistamine used to relieve allergy symptoms.",
+      image: "images/cetirizine.png",
+    },
+    {
+      id: 7,
+      name: "Doxycycline",
+      category: "Capsule",
+      price: 14.99,
+      description: "Antibiotic for respiratory infections and more.",
+      image: "images/doxycycline.png",
+    },
+    {
+      id: 8,
+      name: "Metformin",
+      category: "Tablet",
+      price: 8.99,
+      description: "Used to treat type 2 diabetes.",
+      image: "images/metmormin.png",
+    },
+    {
+      id: 9,
+      name: "Loratadine",
+      category: "Tablet",
+      price: 5.49,
+      description: "Antihistamine for seasonal allergies.",
+      image: "images/loratadine.png",
+    },
+    {
+      id: 10,
+      name: "Naproxen",
+      category: "Tablet",
+      price: 9.49,
+      description: "NSAID for pain and inflammation.",
+      image: "images/naproxen.png",
+    },
+    {
+      id: 11,
+      name: "ORS Solution",
+      category: "Solution",
+      price: 3.99,
+      description: "Oral rehydration solution for dehydration.",
+      image: "images/ors.png",
+    },
+    {
+      id: 12,
+      name: "Dextromethorphan Syrup",
+      category: "Syrup",
+      price: 6.99,
+      description: "Cough suppressant for dry cough.",
+      image: "images/dxm.png",
+    },
+  ];
+}
 
 // ===== Hamburger =====
 document.addEventListener("DOMContentLoaded", () => {
@@ -430,7 +451,7 @@ function addToCart(id, qty = 1) {
   saveCart();
   updateCartBadge();
   renderCart?.();
-  showToast("Added to cart"); // ensures popup on index and medicines pages
+  showToast("Added to cart");
 }
 function removeFromCart(id) {
   cart.items = cart.items.filter((i) => i.id !== id);
@@ -638,7 +659,6 @@ function onMedicinesPageLoad() {
 }
 
 function onCartPageLoad() {
-  // Ensure we load the latest cart state when landing on cart page
   loadCart();
   const host = document.getElementById("cart-page-items");
   const totalEl = document.getElementById("cart-page-total");
@@ -652,7 +672,7 @@ function onCartPageLoad() {
         <div style="text-align: center; padding: 40px 20px; color: var(--muted);">
           <i class="fas fa-shopping-cart" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
           <h3>Your cart is empty</h3>
-          <p style="margin-bottom: 16px;">Add some medicines to get started</p>
+          <p>Add some medicines to get started</p>
           <a href="medicines.html" class="btn primary" style="margin-top: 16px;">Browse Medicines</a>
         </div>
       `;
@@ -670,7 +690,7 @@ function onCartPageLoad() {
         <img src="${med.image}" alt="${med.name}">
         <div>
           <div class="cart-item-title">${med.name}</div>
-          <div class="cart-item-meta">${med.category} · ${med.price.toFixed(
+          <div class="cart-item-meta">${med.category} · $${med.price.toFixed(
         2
       )}</div>
           <div class="cart-qty">
@@ -680,7 +700,7 @@ function onCartPageLoad() {
             <button class="icon-btn remove" style="margin-left:8px">Remove</button>
           </div>
         </div>
-        <div>${(med.price * it.qty).toFixed(2)}</div>`;
+        <div>$${(med.price * it.qty).toFixed(2)}</div>`;
       row.querySelector(".dec").onclick = () => {
         setQty(it.id, it.qty - 1);
         renderCartPage();
@@ -695,7 +715,7 @@ function onCartPageLoad() {
       };
       host.appendChild(row);
     });
-    totalEl.textContent = `${cartTotal().toFixed(2)}`;
+    totalEl.textContent = `$${cartTotal().toFixed(2)}`;
     updateCartBadge();
     setupRevealObserver();
     markRevealsNow();
@@ -847,42 +867,49 @@ function setupDetailsMobileBar(medId) {
 document.addEventListener("DOMContentLoaded", () => {
   loadCart();
   setupCartUI();
-  onMedicinesPageLoad();
-  // details fallback (in case inline script didn't run)
-  (function ensureDetailsFallback() {
-    const container = document.getElementById("medicine-details");
-    if (!container || container.children.length) return;
-    const params = new URLSearchParams(window.location.search);
-    const id = Number(params.get("id"));
-    if (!id) return;
-    const med = medicines.find((m) => m.id === id);
-    if (!med) {
-      container.innerHTML = "<p>Medicine not found.</p>";
-      return;
-    }
-    container.innerHTML = `
-      <h1 class="reveal">${med.name}</h1>
-      <p class="badge" style="justify-self:start;">${med.category}</p>
-      <p class="reveal">${med.description}</p>
-      <div class="card-actions" style="justify-content:flex-start;">
-        <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
-        <a class="btn" href="cart.html">Go to cart</a>
-      </div>
-      <img class="reveal" src="${med.image}" alt="${med.name}" />`;
-    const addBtn = container.querySelector(".add-to-cart");
-    if (addBtn)
-      addBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        addToCart(med.id, 1);
-      });
-    if (typeof setupDetailsMobileBar === "function") setupDetailsMobileBar(id);
-  })();
-  // featured cards animate
-  setTimeout(() => {
-    document.querySelectorAll(".medicine-card").forEach(addReveal);
-    setupRevealObserver();
-    markRevealsNow();
-  }, 200);
+
+  // Load medicines first, then initialize pages
+  loadMedicines().then(() => {
+    onMedicinesPageLoad();
+
+    // details fallback (in case inline script didn't run)
+    (function ensureDetailsFallback() {
+      const container = document.getElementById("medicine-details");
+      if (!container || container.children.length) return;
+      const params = new URLSearchParams(window.location.search);
+      const id = Number(params.get("id"));
+      if (!id) return;
+      const med = medicines.find((m) => m.id === id);
+      if (!med) {
+        container.innerHTML = "<p>Medicine not found.</p>";
+        return;
+      }
+      container.innerHTML = `
+        <h1 class="reveal">${med.name}</h1>
+        <p class="badge" style="justify-self:start;">${med.category}</p>
+        <p class="reveal">${med.description}</p>
+        <div class="card-actions" style="justify-content:flex-start;">
+          <button class="btn add-to-cart" data-id="${med.id}">Add to cart</button>
+          <a class="btn" href="cart.html">Go to cart</a>
+        </div>
+        <img class="reveal" src="${med.image}" alt="${med.name}" />`;
+      const addBtn = container.querySelector(".add-to-cart");
+      if (addBtn)
+        addBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          addToCart(med.id, 1);
+        });
+      if (typeof setupDetailsMobileBar === "function")
+        setupDetailsMobileBar(id);
+    })();
+
+    // featured cards animate
+    setTimeout(() => {
+      document.querySelectorAll(".medicine-card").forEach(addReveal);
+      setupRevealObserver();
+      markRevealsNow();
+    }, 200);
+  });
 });
 
 // Suggestions
