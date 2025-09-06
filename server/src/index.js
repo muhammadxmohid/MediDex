@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 dotenv.config();
 
@@ -9,13 +11,132 @@ const app = express();
 const prisma = new PrismaClient();
 
 app.use(cors());
-app.use(express.json({ limit: "50mb" })); // Increase limit for file uploads
+app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 const PORT = process.env.PORT || 3001;
 const OWNER_KEY = process.env.OWNER_KEY || "admin123";
+const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
 
-// Function to send order notification email using Resend API
+// Sample medicines data for initial seeding
+const sampleMedicines = [
+  {
+    name: "Aspirin",
+    category: "Tablet",
+    price: 5.99,
+    description: "Used to reduce pain, fever, or inflammation.",
+    image: "images/aspirin.png",
+    stockCount: 100,
+  },
+  {
+    name: "Benzyl Penicillin",
+    category: "Injection",
+    price: 19.99,
+    description: "Antibiotic used for bacterial infections.",
+    image: "images/benzene.png",
+    stockCount: 50,
+  },
+  {
+    name: "Paracetamol",
+    category: "Tablet",
+    price: 6.49,
+    description: "Pain reliever and fever reducer.",
+    image: "images/paracetamol.png",
+    stockCount: 150,
+  },
+  {
+    name: "Amoxicillin",
+    category: "Capsule",
+    price: 12.49,
+    description: "Antibiotic for a variety of infections.",
+    image: "images/amoxicillin.png",
+    stockCount: 75,
+  },
+  {
+    name: "Ibuprofen",
+    category: "Tablet",
+    price: 7.49,
+    description: "Reduces fever and treats pain or inflammation.",
+    image: "images/ibuprofen.png",
+    stockCount: 120,
+  },
+  {
+    name: "Cetirizine",
+    category: "Tablet",
+    price: 4.99,
+    description: "Antihistamine used to relieve allergy symptoms.",
+    image: "images/cetirizine.png",
+    stockCount: 80,
+  },
+  {
+    name: "Doxycycline",
+    category: "Capsule",
+    price: 14.99,
+    description: "Antibiotic for respiratory infections and more.",
+    image: "images/doxycycline.png",
+    stockCount: 60,
+  },
+  {
+    name: "Metformin",
+    category: "Tablet",
+    price: 8.99,
+    description: "Used to treat type 2 diabetes.",
+    image: "images/metmormin.png",
+    stockCount: 90,
+  },
+  {
+    name: "Loratadine",
+    category: "Tablet",
+    price: 5.49,
+    description: "Antihistamine for seasonal allergies.",
+    image: "images/loratadine.png",
+    stockCount: 70,
+  },
+  {
+    name: "Naproxen",
+    category: "Tablet",
+    price: 9.49,
+    description: "NSAID for pain and inflammation.",
+    image: "images/naproxen.png",
+    stockCount: 85,
+  },
+  {
+    name: "ORS Solution",
+    category: "Solution",
+    price: 3.99,
+    description: "Oral rehydration solution for dehydration.",
+    image: "images/ors.png",
+    stockCount: 200,
+  },
+  {
+    name: "Dextromethorphan Syrup",
+    category: "Syrup",
+    price: 6.99,
+    description: "Cough suppressant for dry cough.",
+    image: "images/dxm.png",
+    stockCount: 40,
+  },
+];
+
+// Middleware for JWT verification
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Access token required" });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: "Invalid token" });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// Email notification function
 async function sendOrderNotification(order) {
   if (!process.env.RESEND_API_KEY || !process.env.OWNER_EMAIL) {
     console.log("Email not configured, skipping notification");
@@ -46,7 +167,7 @@ async function sendOrderNotification(order) {
       <h3>Items Ordered:</h3>
       <pre>${itemsList}</pre>
       
-      <p><strong>Total Amount:</strong> ${Number(order.total).toFixed(2)}</p>
+      <p><strong>Total Amount:</strong> $${Number(order.total).toFixed(2)}</p>
       
       ${
         order.prescriptionFile
@@ -59,7 +180,13 @@ async function sendOrderNotification(order) {
           : ""
       }
       
-     <p><strong>Manage this order at:</strong> <a href="https://muhammadxmohid.github.io/MediDex/orders.html">Here</a></p>
+      <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+        <p><strong>Manage this order:</strong></p>
+        <a href="https://muhammadxmohid.github.io/MediDex/orders.html" 
+           style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          View Orders Dashboard
+        </a>
+      </div>
     `;
 
     const response = await fetch("https://api.resend.com/emails", {
@@ -77,8 +204,7 @@ async function sendOrderNotification(order) {
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Resend API error: ${response.status} - ${errorData}`);
+      throw new Error(`Resend API error: ${response.status}`);
     }
 
     console.log(`Order notification email sent for order ${order.id}`);
@@ -87,10 +213,44 @@ async function sendOrderNotification(order) {
   }
 }
 
+// Initialize database with sample data
+async function initializeDatabase() {
+  try {
+    // Check if medicines exist
+    const medicineCount = await prisma.medicine.count();
+    if (medicineCount === 0) {
+      console.log("Seeding medicines database...");
+      await prisma.medicine.createMany({
+        data: sampleMedicines,
+      });
+      console.log("✓ Sample medicines added to database");
+    }
+
+    // Create default admin user if none exists
+    const userCount = await prisma.user.count();
+    if (userCount === 0) {
+      console.log("Creating default admin user...");
+      await prisma.user.create({
+        data: {
+          email: "admin@medidex.com",
+          name: "Admin User",
+          role: "ADMIN",
+          isActive: true,
+        },
+      });
+      console.log("✓ Default admin user created");
+    }
+  } catch (error) {
+    console.error("Database initialization error:", error);
+  }
+}
+
 // Health check
 app.get("/", (req, res) => {
   res.json({ status: "MediDex API is running" });
 });
+
+// Public APIs (existing functionality)
 
 // Create order
 app.post("/api/orders", async (req, res) => {
@@ -101,7 +261,6 @@ app.post("/api/orders", async (req, res) => {
       return res.status(400).json({ error: "Invalid order data" });
     }
 
-    // Destructure with default values to handle missing fields
     const {
       name,
       phone,
@@ -119,7 +278,6 @@ app.post("/api/orders", async (req, res) => {
         .json({ error: "Name, phone, and location are required" });
     }
 
-    // Validate CNIC if provided
     if (cnic && cnic.replace(/[^0-9]/g, "").length !== 13) {
       return res.status(400).json({ error: "CNIC must be exactly 13 digits" });
     }
@@ -129,13 +287,13 @@ app.post("/api/orders", async (req, res) => {
       0
     );
 
-    // Create order data - only include new fields if database supports them
     const orderData = {
       name: name.trim(),
       phone: phone.trim(),
       location: location.trim(),
       doctorRecommended: doctorRecommended === "yes",
       total: Number(total.toFixed(2)),
+      status: "RECEIVED",
       items: {
         create: items.map((item) => ({
           medId: Number(item.id) || null,
@@ -146,7 +304,6 @@ app.post("/api/orders", async (req, res) => {
       },
     };
 
-    // Add new fields only if they exist (for backward compatibility)
     if (cnic) orderData.cnic = cnic.replace(/[^0-9]/g, "");
     if (prescriptionFile) {
       orderData.prescriptionFile = prescriptionFile;
@@ -162,7 +319,6 @@ app.post("/api/orders", async (req, res) => {
       },
     });
 
-    // Send email notification to owner (don't await to avoid blocking response)
     sendOrderNotification(order).catch((err) =>
       console.error("Email notification failed:", err)
     );
@@ -185,7 +341,217 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-// Get orders (owner only)
+// Get medicines (for frontend)
+app.get("/api/medicines", async (req, res) => {
+  try {
+    const medicines = await prisma.medicine.findMany({
+      where: { inStock: true },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        price: true,
+        description: true,
+        image: true,
+      },
+    });
+
+    res.json({ medicines });
+  } catch (error) {
+    console.error("Get medicines error:", error);
+    res.status(500).json({ error: "Failed to fetch medicines" });
+  }
+});
+
+// Admin APIs
+
+// Admin login
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { key } = req.body;
+
+    if (key !== OWNER_KEY) {
+      return res.status(401).json({ error: "Invalid access key" });
+    }
+
+    // Get admin user
+    let adminUser = await prisma.user.findFirst({
+      where: { role: "ADMIN", isActive: true },
+    });
+
+    if (!adminUser) {
+      // Create default admin if doesn't exist
+      adminUser = await prisma.user.create({
+        data: {
+          email: "admin@medidex.com",
+          name: "Admin User",
+          role: "ADMIN",
+          isActive: true,
+        },
+      });
+    }
+
+    const token = jwt.sign(
+      { id: adminUser.id, email: adminUser.email, role: adminUser.role },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: adminUser.id,
+        email: adminUser.email,
+        name: adminUser.name,
+        role: adminUser.role,
+      },
+    });
+  } catch (error) {
+    console.error("Admin login error:", error);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// Verify token
+app.get("/api/admin/verify", authenticateToken, (req, res) => {
+  res.json({ valid: true, user: req.user });
+});
+
+// Get orders for admin
+app.get("/api/admin/orders", authenticateToken, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        items: true,
+        assignedUser: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const ordersWithNumbers = orders.map((order) => ({
+      ...order,
+      total: Number(order.total),
+      items: order.items.map((item) => ({
+        ...item,
+        price: Number(item.price),
+      })),
+    }));
+
+    res.json({ orders: ordersWithNumbers });
+  } catch (error) {
+    console.error("Get admin orders error:", error);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+// Update order status
+app.put("/api/admin/orders/:id/status", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = [
+      "RECEIVED",
+      "PROCESSING",
+      "OUT_FOR_DELIVERY",
+      "COMPLETED",
+      "CANCELLED",
+    ];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const order = await prisma.order.update({
+      where: { id },
+      data: {
+        status,
+        assignedTo: req.user.id,
+        updatedAt: new Date(),
+      },
+      include: { items: true },
+    });
+
+    res.json({ success: true, order });
+  } catch (error) {
+    console.error("Update order status error:", error);
+    res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
+// Get medicines for admin
+app.get("/api/admin/medicines", authenticateToken, async (req, res) => {
+  try {
+    const medicines = await prisma.medicine.findMany({
+      orderBy: { name: "asc" },
+    });
+
+    const medicinesWithNumbers = medicines.map((med) => ({
+      ...med,
+      price: Number(med.price),
+    }));
+
+    res.json({ medicines: medicinesWithNumbers });
+  } catch (error) {
+    console.error("Get admin medicines error:", error);
+    res.status(500).json({ error: "Failed to fetch medicines" });
+  }
+});
+
+// Toggle medicine stock
+app.put(
+  "/api/admin/medicines/:id/toggle-stock",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const medicine = await prisma.medicine.findUnique({
+        where: { id: parseInt(id) },
+      });
+
+      if (!medicine) {
+        return res.status(404).json({ error: "Medicine not found" });
+      }
+
+      const updatedMedicine = await prisma.medicine.update({
+        where: { id: parseInt(id) },
+        data: {
+          inStock: !medicine.inStock,
+          updatedAt: new Date(),
+        },
+      });
+
+      res.json({ success: true, medicine: updatedMedicine });
+    } catch (error) {
+      console.error("Toggle medicine stock error:", error);
+      res.status(500).json({ error: "Failed to update medicine stock" });
+    }
+  }
+);
+
+// Get users
+app.get("/api/admin/users", authenticateToken, async (req, res) => {
+  try {
+    // Only admins can view users
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Insufficient permissions" });
+    }
+
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json({ users });
+  } catch (error) {
+    console.error("Get users error:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// Legacy endpoint for backward compatibility
 app.get("/api/orders", async (req, res) => {
   try {
     const { key } = req.query;
@@ -215,11 +581,7 @@ app.get("/api/orders", async (req, res) => {
     res.json({ orders: ordersWithFiles });
   } catch (error) {
     console.error("Get orders error:", error);
-    res.status(500).json({
-      error: "Failed to fetch orders",
-      details:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
+    res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
 
@@ -276,6 +638,8 @@ const startServer = async () => {
   try {
     await prisma.$connect();
     console.log("✓ Database connected");
+
+    await initializeDatabase();
 
     app.listen(PORT, () => {
       console.log(`✓ Server running on port ${PORT}`);
