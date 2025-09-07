@@ -1,7 +1,7 @@
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('ADMIN', 'MANAGER', 'STAFF');
 
--- CreateEnum  
+-- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('RECEIVED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED');
 
 -- CreateTable
