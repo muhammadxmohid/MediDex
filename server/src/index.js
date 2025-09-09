@@ -366,33 +366,30 @@ app.get("/api/medicines", async (req, res) => {
 // Admin APIs
 
 // Admin login
-app.post("/api/admin/login", async (req, res) => {
+// Remove the old /api/admin/login endpoint and replace with this:
+app.post("/api/admin/owner-login", async (req, res) => {
   try {
-    const { key } = req.body;
+    const { email, password } = req.body;
 
-    if (key !== OWNER_KEY) {
-      return res.status(401).json({ error: "Invalid access key" });
+    const OWNER_EMAIL = process.env.OWNER_EMAIL;
+    const OWNER_PASSWORD = process.env.OWNER_PASSWORD;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
     }
 
-    // Get admin user
-    let adminUser = await prisma.user.findFirst({
-      where: { role: "ADMIN", isActive: true },
-    });
-
-    if (!adminUser) {
-      // Create default admin if doesn't exist
-      adminUser = await prisma.user.create({
-        data: {
-          email: "admin@medidex.com",
-          name: "Admin User",
-          role: "ADMIN",
-          isActive: true,
-        },
-      });
+    if (email !== OWNER_EMAIL || password !== OWNER_PASSWORD) {
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    // Create token for the owner (no database needed)
     const token = jwt.sign(
-      { id: adminUser.id, email: adminUser.email, role: adminUser.role },
+      {
+        id: "owner",
+        email: OWNER_EMAIL,
+        role: "ADMIN",
+        name: "Owner",
+      },
       JWT_SECRET,
       { expiresIn: "24h" }
     );
@@ -401,14 +398,14 @@ app.post("/api/admin/login", async (req, res) => {
       success: true,
       token,
       user: {
-        id: adminUser.id,
-        email: adminUser.email,
-        name: adminUser.name,
-        role: adminUser.role,
+        id: "owner",
+        email: OWNER_EMAIL,
+        name: "Owner",
+        role: "ADMIN",
       },
     });
   } catch (error) {
-    console.error("Admin login error:", error);
+    console.error("Owner login error:", error);
     res.status(500).json({ error: "Login failed" });
   }
 });
