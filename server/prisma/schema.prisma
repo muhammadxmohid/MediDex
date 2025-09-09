@@ -13,11 +13,12 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String
+  password  String   // Added password field
   role      Role     @default(STAFF)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  createdBy String?  // ID of admin who created this user
+  createdBy String?
   
   // Relations
   createdOrders Order[] @relation("OrderCreatedBy")
